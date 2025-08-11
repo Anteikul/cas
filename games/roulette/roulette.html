@@ -19,12 +19,19 @@
   @media (max-width:1100px){.wrap{grid-template-columns:1fr; padding-bottom:86px}}
 
   header.appbar{position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:12px;
-    padding:10px 16px; background:linear-gradient(#0d141f, #0b0f14); border-bottom:1px solid var(--edge);}  
-  .lobby-btn{appearance:none; border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-    background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 20%, #0b0f14), #0b1220);
-    color:var(--text); padding:8px 12px; border-radius:12px; font-weight:600; display:inline-flex; align-items:center; gap:8px;
-    box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 8px 24px rgba(0,0,0,.25)}
-  .lobby-btn .dot{width:8px; height:8px; border-radius:99px; background:var(--accent); box-shadow:0 0 8px var(--accent)}
+    padding:10px 16px; background:linear-gradient(#0d141f, #0b0f14); border-bottom:1px solid var(--edge);}
+  .lobby-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:10px 12px;
+    border:1px solid var(--edge);
+    border-radius:12px;
+    background:transparent;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .lobby-btn:hover{ background:rgba(255,255,255,.04); }
   .balance-pill{margin-left:auto; display:flex; align-items:center; gap:8px; padding:6px 10px; background:#0f1625; border:1px solid var(--edge); border-radius:999px}
   .balance-pill input{width:120px; background:transparent; border:none; color:var(--text); font-weight:700}
 
@@ -103,10 +110,7 @@
 </head>
 <body>
   <header class="appbar">
-    <button class="lobby-btn" id="btn-lobby" title="Zpět do lobby">
-      <span class="dot"></span>
-      Lobby
-    </button>
+    <a class="lobby-btn" href="../../index.html">← Lobby</a>
 
     <div class="balance-pill">
       <strong>Balance</strong>
@@ -211,14 +215,17 @@
   const HIGH = new Set(Array.from({length:18},(_,i)=>i+19));
 
   let CHIP_VALUES = [1,5,25,100,500,1000]; // v centech: 0.01–10.00
-  const STORAGE_KEYS = { bal:'roulette_balance_cents', seed:'roulette_server_seed', nonce:'roulette_nonce', client:'roulette_client_seed' };
+  const STORAGE_KEYS = { seed:'roulette_server_seed', nonce:'roulette_nonce', client:'roulette_client_seed' };
+  const WALLET_KEY = 'wallet.balance';
+  function walletGet(){ try{ return Number(JSON.parse(localStorage.getItem(WALLET_KEY))||1000); }catch{ return 1000 } }
+  function walletSet(v){ localStorage.setItem(WALLET_KEY, JSON.stringify(Math.max(0, Number(v)||0))); }
 
   // Money helpers (int cents only)
   const toCents = v => Math.round(parseFloat(String(v).replace(/[^0-9.\-]/g,'')||'0')*100);
   const fmt = cents => (cents/100).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
 
   // State
-  let balance = parseInt(localStorage.getItem(STORAGE_KEYS.bal) || '100000', 10); // 1000.00
+  let balance = Math.round(walletGet()*100);
   let serverSeed = localStorage.getItem(STORAGE_KEYS.seed) || crypto.getRandomValues(new Uint32Array(4)).join('-');
   let clientSeed = localStorage.getItem(STORAGE_KEYS.client) || '';
   let nonce = parseInt(localStorage.getItem(STORAGE_KEYS.nonce) || '0', 10);
@@ -817,7 +824,7 @@
 
   // ====== UI helpers ======
   function updateBalanceUI(){ balanceInput.value = fmt(balance); }
-  function persistBalance(){ localStorage.setItem(STORAGE_KEYS.bal, String(balance)); }
+  function persistBalance(){ walletSet(balance/100); }
   function showToast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); clearTimeout(showToast._t); showToast._t=setTimeout(()=>toastEl.classList.remove('show'), 2600); }
   function lockUI(state){ btnSpin.disabled=state; mSpin.disabled=state; document.querySelectorAll('.cell').forEach(c=>c.disabled=state); }
 
