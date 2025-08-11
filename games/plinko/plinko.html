@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+
+<html lang="cs">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Plinko – smooth physics, fair 50/50, working pegs</title>
+<style>
+  :root{ color-scheme: dark }
+  #plinko-game{ --bg:#0b0f14; --panel:#121825; --edge:#1c2940; --chip:#172235; --text:#e7f1fb; --muted:#9bb0c9; --good:#35d18a; --bad:#ff6b6b; --accent:#5aa7ff }
+  #plinko-game{ color:var(--text); font:14px/1.4 system-ui,Segoe UI,Roboto,Inter,sans-serif }
+  #plinko-game .wrap{ display:grid; grid-template-columns:300px 1fr 320px; gap:16px; padding:16px; background:radial-gradient(1200px 600px at 50% -10%, #17243a 0%, transparent 50%), var(--bg); border:1px solid var(--edge); border-radius:16px }
+  @media(max-width:1100px){ #plinko-game .wrap{ grid-template-columns:1fr } }
+  #plinko-game .card{ background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02)); border:1px solid var(--edge); border-radius:16px; padding:14px; box-shadow:0 10px 28px rgba(0,0,0,.35) }
+  #plinko-game .row{ display:flex; align-items:center; gap:10px }
+  #plinko-game .space{ justify-content:space-between }
+  #plinko-game .tag{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; border:1px solid var(--edge); background:rgba(255,255,255,.04); font-size:12px }
+  #plinko-game input[type=number], #plinko-game input[type=range]{ width:100%; background:#0f1724; color:var(--text); border:1px solid var(--edge); border-radius:10px; padding:10px 12px; outline:0 }
+  #plinko-game input[type=number]:focus{ box-shadow:0 0 0 4px rgba(90,167,255,.15); border-color:var(--accent) }
+  #plinko-game .seg{ display:flex; border:1px solid var(--edge); border-radius:12px; overflow:hidden; background:#0f1724 }
+  #plinko-game .seg button{ flex:1; padding:8px 10px; background:transparent; color:var(--muted); border:0; cursor:pointer }
+  #plinko-game .seg button.active{ background:var(--chip); color:var(--text) }
+  #plinko-game .btn{ appearance:none; border:1px solid var(--edge); background:#162136; color:var(--text); padding:10px 12px; border-radius:12px; cursor:pointer }
+  #plinko-game .btn.primary{ background:linear-gradient(180deg,#6ab2ff,#2a73d6); color:#0a1220; border:0; font-weight:700 }
+  #plinko-game .btn[disabled]{ opacity:.5; cursor:not-allowed }
+
+  /* Board */
+  #plinko-game .board{ position:relative; min-height:560px; border:1px solid var(--edge); border-radius:16px; background:radial-gradient(1200px 600px at 50% -15%, #1a2742 0%, #0c1320 50%, #0a1018 100%) }
+  #plinko-game svg{ display:block; width:100%; height:100% }
+  #plinko-game .bins{ position:absolute; bottom:8px; left:10px; right:10px; display:flex; gap:4px }
+  #plinko-game .bin{ flex:1; text-align:center; padding:6px 0 10px; border:1px solid var(--edge); border-radius:8px; background:linear-gradient(180deg,#10182a,#0d1422) }
+  #plinko-game .bin strong{ font-variant-numeric:tabular-nums }
+
+  #plinko-game .history .item{ display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border:1px solid var(--edge); border-radius:12px; background:rgba(255,255,255,.03); margin-bottom:8px }
+  #plinko-game .win{ color:var(--good) } #plinko-game .loss{ color:var(--bad) }
+
+  /* Ball glow */
+  #plinko-game .ball-shadow{ filter:url(#plinko-blur) }
+
+/* Peg pulse on hit */
+#plinko-game .peg{ transition:fill .12s ease, stroke .12s ease }
+#plinko-game .peg.hit{ fill:#3b5d8f !important; stroke:#91baff !important }
+
+  /* History: fixed height & scroll */
+  #plinko-game .history{ height:560px; display:flex; flex-direction:column }
+  #plinko-game .history h3{ margin:0 0 8px }
+  #plinko-game #plk-hist{ overflow:auto; flex:1; min-height:0; padding-right:2px }
+  @media(max-width:1100px){
+    #plinko-game .history{ height:60vh }
+  }
+
+
+  /* --- Unified Lobby button --- */
+  .lobby-row{ margin-bottom:8px }
+  .lobby-btn{ display:inline-flex; align-items:center; gap:6px; width:auto !important; min-width:0; padding:10px 12px }
+
+  /* Unified Lobby button (self-contained) */
+  .lobby-row{ margin-bottom:8px }
+  .lobby-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:10px 12px;
+    border:1px solid var(--edge);
+    border-radius:12px;
+    background:transparent;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:600;
+    cursor:pointer;
+    width:auto; min-width:0;
+  }
+  .lobby-btn:hover{ background:rgba(255,255,255,.04) }
+
+
+  /* --- Make Plinko match Mines UI more closely --- */
+  #plinko-game .wrap{
+    max-width:1400px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:300px 1fr 340px;
+  }
+  @media(max-width:1100px){
+    #plinko-game .wrap{ grid-template-columns:1fr }
+    #plinko-game .right{ order:3 }
+    #plinko-game .gridcard{ order:2 }
+    #plinko-game .left{ order:1 }
+  }
+  #plinko-game .card{
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+    border:1px solid var(--edge);
+    border-radius:16px;
+    box-shadow:0 10px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+    backdrop-filter: blur(6px);
+  }
+  #plinko-game .row{ display:flex; gap:10px; align-items:center }
+  #plinko-game .tag{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:999px;
+    border:1px solid var(--edge);
+    background:rgba(255,255,255,.04); font-size:12px
+  }
+  #plinko-game .btn{ width:100%; border-radius:12px; padding:12px 14px; font-weight:700 }
+  #plinko-game .btn.ghost{ background:transparent; border:1px solid var(--edge); color:var(--text) }
+  #plinko-game .btn.primary{ background:linear-gradient(180deg,#6ab2ff,#2a73d6); border:0; color:#0a1220 }
+  #plinko-game .seg button{ padding:10px }
+  /* History as fixed column with scroll (matching Mines behavior) */
+  #plinko-game .history{ height:560px; display:flex; flex-direction:column }
+  #plinko-game .history h3{ margin:0 0 8px }
+  #plinko-game #plk-hist{ overflow:auto; flex:1; min-height:0; padding-right:2px }
+  @media(max-width:1100px){
+    #plinko-game .history{ height:60vh }
+  }
+
+
+  /* Unified Lobby button (self-contained) */
+  #plinko-game .lobby-row{ margin-bottom:8px }
+  #plinko-game .lobby-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:10px 12px;
+    border:1px solid var(--edge);
+    border-radius:12px;
+    background:transparent;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:600;
+    cursor:pointer;
+    width:auto; min-width:0;
+  }
+  #plinko-game .lobby-btn:hover{ background:rgba(255,255,255,.04) }
+
+
+  /* --- Responsive layout to mirror Mines --- */
+  #plinko-game .wrap{ max-width:1400px; margin:0 auto; display:grid; grid-template-columns:clamp(260px,22vw,320px) 1fr clamp(280px,24vw,360px); gap:16px }
+  @media(max-width:1100px){ #plinko-game .wrap{ grid-template-columns:1fr } .right{order:3} .gridcard{order:2} .left{order:1} }
+
+  /* Unify card styling */
+  #plinko-game .card{ background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+                      border:1px solid var(--edge); border-radius:16px; padding:14px;
+                      box-shadow:0 10px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+                      backdrop-filter: blur(6px); }
+
+  /* Responsive panel heights */
+  #plinko-game{ --panel-h: clamp(420px, 68vh, 820px) }
+  #plinko-game .board{ height: var(--panel-h); min-height: auto }
+  #plinko-game .history{ height: var(--panel-h); display:flex; flex-direction:column }
+  #plinko-game #plk-hist{ overflow:auto; flex:1; min-height:0; padding-right:2px }
+  #plinko-game .history h3{ margin:0 0 8px }
+
+  /* Make SVG fill board height */
+  #plinko-game svg{ height:100% }
+
+  /* Small visual alignment tweaks */
+  #plinko-game .row.space{ align-items:flex-end }
+
+</style>
+</head>
+<body>
+<div class="plinko-root" id="plinko-game">
+<div class="wrap">
+<!-- Left Controls -->
+<section class="left card"><div class="lobby-row"><a class="lobby-btn" href="../../index.html">← Lobby</a></div><div class="row" style="margin-bottom:8px"></div><div class="row" style="margin-bottom:8px"></div>
+<div class="row" style="margin-bottom:8px"></div>
+<div style="margin-bottom:8px"></div><div style="height:10px"></div>
+<div class="row space">
+<div><div class="tag">Balance: <strong class="bal">0.00</strong></div></div>
+<div class="row" style="gap:6px;flex-wrap:wrap">
+
+
+
+
+</div>
+</div>
+<div style="height:10px"></div>
+<div class="row">
+<div style="flex:1">
+<label class="tag">Bet</label>
+<input id="plk-bet" min="0.01" step="0.01" type="number" value="1.00"/>
+</div>
+<div class="seg" style="width:160px">
+<button id="plk-half">½</button>
+<button id="plk-double">2×</button>
+<button id="plk-max">Max</button>
+</div>
+</div>
+<div style="height:10px"></div>
+<div class="row">
+<label class="tag">Difficulty</label>
+<div class="seg" id="plk-diff" style="flex:1">
+<button class="active" data-diff="easy">Easy</button>
+<button data-diff="medium">Medium</button>
+<button data-diff="hard">Hard</button>
+</div>
+</div>
+<div style="height:10px"></div>
+<div class="row">
+<label class="tag">Rows: <strong id="plk-rows-v">12</strong></label>
+<input id="plk-rows" max="16" min="8" step="1" type="range" value="12"/>
+</div>
+<div style="height:12px"></div>
+<div class="row">
+<button class="btn primary" id="plk-drop" style="flex:1">Drop ball</button>
+<button class="btn" id="plk-auto">Auto</button>
+</div>
+<div style="height:12px"></div>
+<div class="row" style="flex-wrap:wrap;gap:8px">
+<span class="tag">RTP ≈ <strong id="plk-rtp">97%</strong></span>
+<span class="tag">Last: <strong id="plk-last">–</strong></span>
+</div>
+</section>
+<!-- Board -->
+<section class="gridcard card board">
+<svg id="plk-svg" preserveaspectratio="xMidYMid meet"></svg>
+<div class="bins" id="plk-bins"></div>
+</section>
+<!-- History -->
+<aside class="right card history">
+<h3>History</h3>
+<div id="plk-hist"></div>
+</aside>
+</div>
+</div>
+<script>
+(function(){
+  // ===== Shared balance =====
+  const WALLET_KEY='wallet.balance';
+  const fmt = new Intl.NumberFormat(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  function walletGet(){ try{ return Number(JSON.parse(localStorage.getItem(WALLET_KEY))||1000) }catch{ return 1000 } }
+  function walletSet(v){
+    localStorage.setItem(WALLET_KEY, JSON.stringify(Math.max(0, Number(v)||0)));
+    document.querySelectorAll('.balance-amount, .bal').forEach(el=> el.textContent = fmt.format(walletGet()));
+  }
+
+  // ===== Math & RTP =====
+  function choose(n,k){ if(k<0||k>n) return 0; if(k>n-k) k=n-k; let r=1; for(let i=1;i<=k;i++){ r=r*(n-k+i)/i } return r }
+  function binom(n){ const p=[]; const denom=2**n; for(let k=0;k<=n;k++) p.push(choose(n,k)/denom); return p }
+  function normalize(mRaw, probs, target){ const E0=probs.reduce((s,p,i)=>s+p*mRaw[i],0); const scale=target/E0; return mRaw.map(x=> Math.max(0.1, +(x*scale).toFixed(4))) }
+  function shape(rows, diff){
+    const n=rows, out=new Array(n+1).fill(0), mid=n/2;
+    const base={easy:0.85,medium:0.75,hard:0.65}[diff]||0.8;
+    const edgePow={easy:1.4,medium:1.8,hard:2.3}[diff]||1.7;
+    const edgeBoost={easy:8,medium:22,hard:140}[diff]||12;
+    for(let k=0;k<=n;k++){
+      const dist=Math.abs(k-mid)/(n/2); const edge = 1 + Math.pow(dist, edgePow)*edgeBoost;
+      out[k] = base*(0.55+0.6*(1-Math.pow(dist,1.3))) + dist*edge;
+    }
+    return out;
+  }
+  function buildMultipliers(rows, diff){ const probs=binom(rows); const raw=shape(rows,diff); return {probs, mult: normalize(raw, probs, 0.97)} }
+
+  // ===== DOM =====
+  const root = document.getElementById('plinko-game');
+  const svg = document.getElementById('plk-svg');
+  const binsEl = document.getElementById('plk-bins');
+  const hist = document.getElementById('plk-hist');
+  const betInput = document.getElementById('plk-bet');
+  const rowsSlider = document.getElementById('plk-rows');
+  const rowsVal = document.getElementById('plk-rows-v');
+  const diffSeg = document.getElementById('plk-diff');
+  const lastEl = document.getElementById('plk-last');
+  const rtpEl = document.getElementById('plk-rtp');
+
+  // ===== State =====
+  const state = { rows:12, diff:'easy', bet:1.00, probs:[], mult:[], auto:false };
+
+  // ===== Layout & SVG layers =====
+  let view = { w:0,h:0, gapX:36, gapY:36, top:30, pegR:4.2 };
+  let defsEl, pegLayer, ballLayer;
+
+  function setView(){
+    const {clientWidth:w, clientHeight:h} = svg;
+    view.w=w||800; view.h=Math.max(560,h||560);
+    svg.setAttribute('viewBox',`0 0 ${view.w} ${view.h}`);
+  }
+
+  function ensureLayers(){
+    if (defsEl && pegLayer && ballLayer) return;
+    // defs
+    defsEl = document.createElementNS('http://www.w3.org/2000/svg','defs');
+    const blur = document.createElementNS('http://www.w3.org/2000/svg','filter');
+    blur.setAttribute('id','plinko-blur');
+    const fe = document.createElementNS('http://www.w3.org/2000/svg','feGaussianBlur');
+    fe.setAttribute('stdDeviation','1.2');
+    blur.appendChild(fe);
+    defsEl.appendChild(blur);
+    // layers
+    pegLayer  = document.createElementNS('http://www.w3.org/2000/svg','g');
+    pegLayer.setAttribute('id','peg-layer');
+    ballLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+    ballLayer.setAttribute('id','ball-layer');
+    svg.appendChild(defsEl);
+    svg.appendChild(pegLayer);
+    svg.appendChild(ballLayer);
+  }
+
+  function pegId(r,c){ return `peg-${r}-${c}` }
+
+  function drawPegs(){
+    ensureLayers();
+    // recompute geometry
+    const n=state.rows; const pad=24; const usableW=view.w-pad*2;
+    const gapX=Math.min(42, usableW/(n+1)); const gapY=Math.min(38, (view.h-170-view.top)/(n+1));
+    view.gapX=gapX; view.gapY=gapY;
+    // wipe only pegs
+    while (pegLayer.firstChild) pegLayer.removeChild(pegLayer.firstChild);
+    // draw grid of pegs
+    for(let r=0;r<n;r++){
+      const y=view.top + (r+1)*gapY; const rowW = r*gapX; const startX=(view.w/2) - rowW/2;
+      for(let c=0;c<=r;c++){
+        const x=startX + c*gapX;
+        const g=document.createElementNS('http://www.w3.org/2000/svg','circle');
+        g.setAttribute('cx',x); g.setAttribute('cy',y); g.setAttribute('r',view.pegR);
+        g.setAttribute('fill','#243652'); g.setAttribute('stroke','#31507a'); g.setAttribute('stroke-width','1');
+        g.classList.add('peg');
+        g.setAttribute('id', pegId(r,c));
+        pegLayer.appendChild(g);
+      }
+    }
+  }
+
+  function drawBins(){
+    binsEl.innerHTML='';
+    const n=state.rows;
+    for(let k=0;k<=n;k++){
+      const el=document.createElement('div'); el.className='bin';
+      const m=state.mult[k]; const s=m>=10?m.toFixed(1):m.toFixed(2);
+      el.innerHTML=`<small>x</small><strong>${s}</strong>`;
+      binsEl.appendChild(el)
+    }
+  }
+
+  function renderBoard(){
+    setView();
+    ensureLayers();
+    drawPegs();
+    drawBins();
+  }
+
+  // ===== RNG (per-row 50/50) =====
+  function rngBits(count){
+    const need=Math.ceil(count/32); const arr=new Uint32Array(need); crypto.getRandomValues(arr);
+    const out=[]; for(const w of arr){ for(let i=0;i<32 && out.length<count;i++){ out.push((w>>>i)&1) } } return out;
+  }
+
+  // ===== Physics & Balls (deterministic peg hits per row) =====
+  const GRAV = 520, VTERM = 600, BALL_R=6.5, SOFT_WALL=10;
+  const MAX_SPEED_MULT = 1.25; // ≤ 1.25× počáteční |vx|
+  const balls = new Set();
+  let lastTs=performance.now();
+
+  function setLast(s){ lastEl.textContent = s }
+  function addHistory(k, m, win){
+    const item=document.createElement('div'); item.className='item';
+    item.innerHTML=`<span class="tag">x${m>=10?m.toFixed(1):m.toFixed(2)}</span><span>${win>0?'<span class="win">+'+win.toFixed(2)+'</span>':'<span class="loss">'+win.toFixed(2)+'</span>'}`;
+    hist.prepend(item); while(hist.children.length>24) hist.lastChild.remove();
+  }
+
+  function pulsePeg(r,c){
+    const el = document.getElementById(pegId(r,c));
+    if(!el) return;
+    el.classList.add('hit');
+    setTimeout(()=> el.classList.remove('hit'), 120);
+  }
+
+  function spawnBall(){
+    if(balls.size>60) return; // safety
+
+    // charge bet
+    const bet = Math.max(0.01, Number(betInput.value)||1);
+    state.bet=+bet.toFixed(2);
+    walletSet(walletGet() - state.bet);
+    setLast('-'+state.bet.toFixed(2));
+
+    // fair path bits
+    const bits = rngBits(state.rows);
+
+    // visual entity
+    ensureLayers();
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('r', BALL_R); circle.setAttribute('fill','#6fb1ff'); circle.setAttribute('stroke','#8ac0ff'); circle.setAttribute('stroke-width','1');
+    circle.classList.add('ball-shadow');
+    ballLayer.appendChild(circle);
+
+    // initial horizontal velocity & caps
+    const vx0 = (Math.random()-0.5) * 40;
+    const b = {
+      el: circle,
+      x: view.w/2 + (Math.random()-0.5)*4,
+      y: view.top - 8,
+      vx: vx0,
+      initialSpeed: Math.max(1, Math.abs(vx0)),
+      maxVx: MAX_SPEED_MULT * Math.max(1, Math.abs(vx0)),
+      vy: 0,
+      row: 0,                // next row index to hit (0..rows-1)
+      bits,                  // 0=L, 1=R
+      rightsSoFar: 0,        // for final bin
+      done: false
+    };
+    balls.add(b);
+  }
+
+  function stepBall(b, dt){
+    if(b.done) return;
+
+    // --- fall (slow) ---
+    const prevY = b.y;
+    b.vy += GRAV * dt;
+    if (b.vy > VTERM) b.vy = VTERM;
+    b.y += b.vy * dt;
+
+    // --- deterministic peg "collision": as soon as we cross row height, we hit exactly 1 peg in that row ---
+    if (b.row < state.rows) {
+      while (b.row < state.rows) {
+        const r = b.row;                                   // 0..rows-1
+        const pegY = view.top + (r+1)*view.gapY;           // Y of the peg row
+        if (!(prevY < pegY && b.y >= pegY)) break;         // did we cross this row this frame?
+
+        // current peg X by column = rightsSoFar
+        const startX = (view.w/2) - (r * view.gapX)/2;
+        const c = b.rightsSoFar;                           // 0..r
+        const pegX = startX + c*view.gapX;
+
+        // visual pulse
+        pulsePeg(r, c);
+
+        // fair bit decides side
+        const bit = b.bits[r] ? 1 : 0; // 0=L, 1=R
+        if (bit) b.rightsSoFar++;
+
+        // physics impulse + slight vertical damp
+        b.vy *= 0.82;
+        const dir = bit ? 1 : -1;
+        const kick   = Math.min(b.maxVx, (view.gapX * 1.6));
+        const jitter = (Math.random()-0.5) * (view.gapX * 0.08);
+        const prevVx = b.vx;
+        let newVx = prevVx*0.35 + dir * kick + jitter;
+
+        // per-frame dv limit + absolute cap ≤ 1.25× initial
+        const MAX_DVX = (b.maxVx) * 0.6 * dt;
+        const dvx = newVx - prevVx;
+        if (Math.abs(dvx) > MAX_DVX) newVx = prevVx + Math.sign(dvx)*MAX_DVX;
+        if (Math.abs(newVx) > b.maxVx) newVx = Math.sign(newVx) * b.maxVx;
+        b.vx = newVx;
+
+        // place just below/aside the peg to avoid re-trigger
+        b.x = pegX + dir * (BALL_R + view.pegR + 0.6);
+        b.y = pegY + 0.001;
+
+        // next row next time
+        b.row++;
+      }
+    }
+
+    // --- horizontal motion (air damping) ---
+    const damping = 1.8;
+    b.vx *= Math.exp(-damping * dt);
+    b.x  += b.vx * dt;
+
+    // soft walls
+    if(b.x < SOFT_WALL+BALL_R){ b.x=SOFT_WALL+BALL_R; b.vx = Math.abs(b.vx)*0.8 }
+    if(b.x > view.w-(SOFT_WALL+BALL_R)){ b.x=view.w-(SOFT_WALL+BALL_R); b.vx = -Math.abs(b.vx)*0.8 }
+
+    // landed – payout by exact rights
+    const binY = view.top + (state.rows+1)*view.gapY;
+    if(b.y >= binY){
+      b.done=true;
+      const k = b.rightsSoFar; const m = state.mult[k]; const win = +(state.bet * m).toFixed(2);
+      walletSet(walletGet() + win); setLast('+'+win.toFixed(2)); addHistory(k, m, win);
+      const bin = binsEl.children[k]; if(bin){ bin.style.transform='scale(1.06)'; setTimeout(()=>bin.style.transform='', 160) }
+      b.el.style.transition='opacity .24s, r .24s'; b.el.style.opacity='0'; b.el.setAttribute('r', 3);
+      setTimeout(()=>{ b.el.remove(); balls.delete(b); }, 250);
+    }
+
+    // draw
+    b.el.setAttribute('cx', b.x.toFixed(2));
+    b.el.setAttribute('cy', b.y.toFixed(2));
+  }
+
+  function animate(ts){
+    const dt=Math.min(0.032, (ts-lastTs)/1000);
+    lastTs=ts;
+    balls.forEach(b=> stepBall(b, dt));
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+
+  // ===== UI wiring =====
+  function rebuild(){
+    const {mult, probs}=buildMultipliers(state.rows, state.diff);
+    state.mult=mult; state.probs=probs;
+    renderBoard();
+    const realized = mult.reduce((s,m,i)=> s + m*probs[i],0);
+    rtpEl.textContent = Math.round(realized*100)+'%';
+    rowsVal.textContent=state.rows;
+  }
+
+  // init
+  state.bet = Math.max(0.01, Number(betInput.value)||1);
+  walletSet(walletGet());
+  rebuild();
+
+  // controls
+  document.getElementById('plk-drop').addEventListener('click', ()=> spawnBall());
+  document.getElementById('plk-auto').addEventListener('click', (e)=>{
+    state.auto=!state.auto;
+    e.currentTarget.classList.toggle('primary', state.auto);
+    if(state.auto){
+      const t=setInterval(()=>{
+        if(!state.auto) return clearInterval(t);
+        const bet = Math.max(0.01, Number(betInput.value)||1);
+        if(walletGet() >= bet) spawnBall(); else state.auto=false;
+      }, 180);
+    }
+  });
+  diffSeg.querySelectorAll('button').forEach(b=> b.addEventListener('click',()=>{
+    diffSeg.querySelectorAll('button').forEach(x=> x.classList.remove('active'));
+    b.classList.add('active'); state.diff=b.dataset.diff; rebuild();
+  }));
+  rowsSlider.addEventListener('input', ()=>{ state.rows = parseInt(rowsSlider.value,10); rebuild() });
+
+  // bet helpers
+  document.getElementById('plk-half').onclick = ()=>{ betInput.value = Math.max(0.01, (Number(betInput.value)||1)/2).toFixed(2) };
+  document.getElementById('plk-double').onclick = ()=>{ const bal=walletGet(); betInput.value = Math.min(bal, (Number(betInput.value)||1)*2).toFixed(2) };
+  document.getElementById('plk-max').onclick = ()=>{ const bal=walletGet(); betInput.value = Math.max(0.01, Math.min(bal, bal)).toFixed(2) };
+
+  // deposit helpers
+  
+  
+
+  // keyboard: Space to drop
+  window.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ e.preventDefault(); spawnBall() } });
+
+  // tiny API
+  root.plinko = {
+    drop: spawnBall,
+    setRows:(r)=>{ rowsSlider.value=r; state.rows=r; rebuild() },
+    setDiff:(d)=>{ state.diff=d; diffSeg.querySelectorAll('button').forEach(x=> x.classList.toggle('active', x.dataset.diff===d)); rebuild() }
+  };
+
+  // optional: reflow on resize
+  window.addEventListener('resize', ()=> renderBoard());
+})();
+</script>
+</body>
+</html>
