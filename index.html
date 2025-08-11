@@ -1,22 +1,6 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="utf-8" />
-  <title>Lobby</title>
-</head>
-<body>
-  <h1>Lobby</h1>
-  <p>Balance: <span id="balance"></span></p>
-  <nav>
-    <a href="games/roulette/roulette.html">Roulette</a>
-  </nav>
-  <script src="wallet.js"></script>
-  <script>
-    const balEl = document.getElementById('balance');
-    function update() { balEl.textContent = (wallet.get()/100).toFixed(2); }
-    wallet.onChange(update);
-    update();
-  </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Casino Hub – Lokální demo</title>
