@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dice – Line Roll (working, PF, tip marker)</title>
+<style>
+  :root{
+    --bg:#0b1018; --bg2:#0a0f17; --edge:#1a2843;
+    --text:#e9f3ff; --muted:#9fb4d0; --accent:#67a8ff; --accent2:#70c1ff;
+    --good:#3ae08f; --good-ink:#001a0e; --bad:#ff6d6d; --gold:#ffd266;
+  }
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--text);
+    font:14px/1.45 system-ui,Segoe UI,Roboto,Inter,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #16243b 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg), var(--bg2));
+  }
+  *{box-sizing:border-box}
+
+  /* Top bar */
+  .topbar{
+    position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:12px;
+    padding:12px 16px; background:linear-gradient(180deg, rgba(13,22,37,.9), rgba(10,16,26,.85));
+    border-bottom:1px solid var(--edge); backdrop-filter: blur(6px);
+  }
+  .brand{font-weight:700}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:#0d1729;border:1px solid var(--edge);border-radius:999px;padding:6px 10px}
+  .balanceBox{position:relative;margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#0d1729;border:1px solid var(--edge);border-radius:999px}
+  .bBtns .btn{padding:6px 10px}
+  .creditFloat{
+    position:absolute; right:12px; top:-4px; font-weight:700; pointer-events:none; opacity:0; transform:translateY(0);
+    background:rgba(58,224,143,.12); border:1px solid rgba(58,224,143,.4); padding:4px 8px; border-radius:8px; color:var(--good);
+    animation: creditRise .9s ease-out forwards;
+  }
+  @keyframes creditRise{0%{opacity:0;transform:translateY(8px)}15%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+  .balancePulse{ animation: pulseGreen .7s ease-out 1 }
+  @keyframes pulseGreen{0%{box-shadow:0 0 0 0 rgba(58,224,143,0)}30%{box-shadow:0 0 0 6px rgba(58,224,143,.18)}100%{box-shadow:0 0 0 0 rgba(58,224,143,0)}}
+
+  .wrap{display:grid; grid-template-columns:340px 1fr; gap:16px; padding:16px}
+  @media (max-width:1000px){ .wrap{grid-template-columns:1fr} }
+  .card{background:linear-gradient(180deg, rgba(20,31,53,.88), rgba(14,21,34,.95)); border:1px solid var(--edge); border-radius:14px; overflow:hidden}
+  .card h2{margin:0;padding:12px 14px;border-bottom:1px solid var(--edge);font-size:16px;background:linear-gradient(180deg,#122039,#0f1b33)}
+  .section{padding:14px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .col{display:flex;flex-direction:column;gap:6px}
+  .muted{color:var(--muted)}
+  .btn{background:#11223b;border:1px solid #1e3356;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;transition:transform .06s ease, background .15s, border-color .15s}
+  .btn:hover{background:#142a48;border-color:#284a7f}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:linear-gradient(180deg,var(--accent2),var(--accent));border-color:#86c4ff;color:#072142;font-weight:700}
+  .btn.good{background:linear-gradient(180deg,#61f0b2,var(--good));border-color:#8af5c8;color:var(--good-ink);font-weight:700}
+  .btn.bad{background:linear-gradient(180deg,#ff9696,var(--bad));border-color:#ffb3b3;color:#2a0000;font-weight:700}
+  .btn.ghost{background:transparent;border-color:var(--edge)}
+  input[type="number"], input[type="text"], select{
+    background:#0d1729;border:1px solid var(--edge);color:var(--text);
+    border-radius:10px;padding:12px;min-width:0
+  }
+  input.full{width:100%}
+
+  .toggles{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--edge);border-radius:12px;overflow:hidden}
+  .toggle{padding:10px 14px;text-align:center;cursor:pointer;background:#0d1729}
+  .toggle.active{background:#173055;color:#fff}
+  .stat{display:flex;justify-content:space-between;background:#0d1729;border:1px solid var(--edge);border-radius:12px;padding:10px 12px}
+  .stat .v{font-weight:700}
+
+  /* HERO line */
+  .hero{display:grid; gap:14px; align-content:center; min-height:340px}
+  .lineWrap{
+    position:relative; padding:28px 16px 38px; border:1px solid var(--edge); border-radius:16px;
+    background:linear-gradient(180deg,#112038,#0f1a2f);
+  }
+  .lineLabels{display:flex;justify-content:space-between;color:#a8bbd6;font-size:12px;margin-top:8px}
+  
+  .line{
+  position:relative; height:12px; border-radius:999px;
+  background:#0b1526; outline:1px solid #1e3356;
+  overflow:visible; /* důležité, aby marker nebyl uříznut */
+}
+.seg{ position:absolute; top:0; bottom:0; z-index:0; }
+.handle{ z-index:1; }
+.marker{
+  position:absolute; left:0%; top:-10px;
+  transform:translate(-50%,-100%);
+  min-width:84px; padding:8px 10px; border-radius:10px; text-align:center;
+  background:#0d1729; border:1px solid var(--edge); color:var(--text);
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
+  transition: left 0.9s cubic-bezier(.2,.8,.2,1), transform 0.9s cubic-bezier(.2,.8,.2,1);
+  pointer-events:none; z-index:2;
+}
+
+/* přidej vrstvy */
+.seg{ position:absolute; top:0; bottom:0; z-index:0; }
+.handle{ z-index:1; }
+.marker{ z-index:2; }
+  .seg{position:absolute; top:0; bottom:0}
+  .seg.win{background:linear-gradient(90deg, rgba(58,224,143,.85), rgba(58,224,143,.6))}
+  .seg.lose{background:linear-gradient(90deg, rgba(255,109,109,.85), rgba(255,109,109,.6))}
+  .tick{position:absolute; top:-6px; width:2px; height:24px; background:#2b3f63; opacity:.6}
+  .handle{position:absolute; top:50%; transform:translate(-50%,-50%); width:18px; height:18px; border-radius:6px; background:#70c1ff; border:2px solid #aee0ff; box-shadow:0 0 12px rgba(112,193,255,.35); cursor:grab}
+  .handle:active{cursor:grabbing}
+
+  /* Marker above the line, with tip */
+  .marker{
+    position:absolute; left:0%; transform:translate(-50%,-100%) translateX(-40px);
+    top:-10px; /* nad lajnou, tip míří na lajnu */
+    min-width:84px; padding:8px 10px; border-radius:10px; text-align:center;
+    background:#0d1729; border:1px solid var(--edge); color:var(--text);
+    box-shadow:0 6px 20px rgba(0,0,0,.35);
+    transition: transform 0.9s cubic-bezier(.2,.8,.2,1);
+    pointer-events:none;
+  }
+  .marker::after{
+    content:""; position:absolute; left:50%; transform:translateX(-50%);
+    bottom:-7px; width:0; height:0;
+    border-left:7px solid transparent; border-right:7px solid transparent;
+    border-top:7px solid #0d1729;
+    filter: drop-shadow(0 -1px 0 rgba(26,40,67,1));
+  }
+  .marker .roll{font-weight:800; font-size:16px}
+  .marker .bet{font-size:12px; color:var(--muted)}
+  .marker.win{outline:2px solid var(--good)}
+  .marker.lose{outline:2px solid var(--bad)}
+
+  .history{display:flex;gap:6px;overflow:auto;padding:10px;border-top:1px solid var(--edge);background:#0d1729;border-radius:12px}
+  .dot{min-width:34px;padding:6px 8px;border-radius:10px;text-align:center;border:1px solid var(--edge)}
+  .dot.win{background:#0f2a1e;border-color:#1f684a;color:#9ef2c9}
+  .dot.lose{background:#2a1010;border-color:#7a2a2a;color:#ffb0b0}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px;border-bottom:1px dashed #20314f;text-align:left;white-space:nowrap}
+</style>
+</head>
+<body>
+
+  <!-- TOP -->
+  <div class="topbar">
+    <div class="brand">🎲 Dice (Mines skin)</div>
+    <div class="pill">HE: <strong id="heTop">1.00%</strong></div>
+    <div class="pill">Pravidlo: <strong id="ruleTop">Under (target 49.00)</strong></div>
+    <div class="balanceBox" id="balanceBox">
+      <span>Balance:</span> <strong id="balance">1 000.00</strong>
+      <div class="bBtns">
+        <button id="b_plus_100" class="btn ghost">+100</button>
+        <button id="b_plus_1000" class="btn ghost">+1 000</button>
+        <button id="b_reset" class="btn ghost">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- LEFT: inputs -->
+    <div class="card">
+      <h2>Sázka & režim</h2>
+      <div class="section">
+        <div class="col" style="gap:12px">
+          <!-- VLASTNÍ ČÁSTKA – samostatný plný řádek -->
+          <div class="col">
+            <label class="muted" for="betAmount">Částka sázky</label>
+            <input id="betAmount" class="full" type="number" min="0" step="0.01" value="10" />
+          </div>
+          <!-- AŽ PODTÍM tlačítka -->
+          <div class="row">
+            <button class="btn ghost" data-bet="+1">+1</button>
+            <button class="btn ghost" data-bet="+10">+10</button>
+            <button class="btn ghost" data-bet="+100">+100</button>
+            <button class="btn ghost" data-bet="half">½</button>
+            <button class="btn ghost" data-bet="double">2×</button>
+            <button class="btn ghost" data-bet="max">Max</button>
+          </div>
+
+          <div class="row">
+            <div class="col" style="flex:1">
+              <label class="muted">Under / Over</label>
+              <div class="toggles" id="uoToggle" style="min-width:180px">
+                <div class="toggle active" data-uo="under">Under</div>
+                <div class="toggle" data-uo="over">Over</div>
+              </div>
+            </div>
+            <div class="col">
+              <label class="muted">House Edge</label>
+              <input id="houseEdge" type="number" min="0" max="5" step="0.05" value="1" style="width:110px">
+            </div>
+          </div>
+
+          <div class="stat"><span class="muted">Payout</span><span class="v" id="payoutOut">× 2.00</span></div>
+          <div class="stat"><span class="muted">Win chance</span><span class="v" id="chanceOut">49.00 %</span></div>
+          <div class="stat"><span class="muted">Target</span><span class="v" id="targetOut">49.00</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: hero line -->
+    <div class="card">
+      <h2>Hra</h2>
+      <div class="section hero">
+        <div class="lineWrap" id="lineWrap">
+          <div class="line" id="line">
+            <div class="seg win" id="segWin"></div>
+            <div class="seg lose" id="segLose"></div>
+            <div class="tick" style="left:0%"></div>
+            <div class="tick" style="left:25%"></div>
+            <div class="tick" style="left:50%"></div>
+            <div class="tick" style="left:75%"></div>
+            <div class="tick" style="left:100%"></div>
+            <div class="handle" id="handle" title="Target"></div>
+
+            <!-- Marker žije uvnitř .line, takže left:% sedí přesně -->
+            <div class="marker" id="marker" style="display:none">
+              <div class="roll" id="markerRoll">0.00</div>
+              <div class="bet" id="markerBet">Bet: 0.00</div>
+            </div>
+          </div>
+          <div class="lineLabels"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+        </div>
+
+        <div class="row" style="justify-content:center; gap:12px">
+          <button id="pfBtn" class="btn">Provably Fair</button>
+          <button id="rollBtn" class="btn primary" style="min-width:240px; font-size:18px; padding:14px 18px">Roll</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Moje sázky -->
+  <div style="padding:0 16px 16px">
+    <div class="card">
+      <h2>Moje sázky</h2>
+      <div class="section" id="tableMine"></div>
+      <div class="history" id="history"></div>
+    </div>
+  </div>
+
+  <!-- PF dialog -->
+  <dialog id="pfDialog">
+    <div class="modal">
+      <h3>Provably Fair – HMAC-SHA256</h3>
+      <div class="section">
+        <div class="row">
+          <div class="col" style="flex:1">
+            <label class="muted">Server seed (secret hex)</label>
+            <input id="serverSeed" type="text" class="mono" value="">
+          </div>
+          <div class="col" style="flex:1">
+            <label class="muted">Client seed</label>
+            <input id="clientSeed" type="text" class="mono" value="">
+          </div>
+          <div class="col">
+            <label class="muted">Nonce</label>
+            <input id="nonce" type="number" min="0" value="0" style="width:120px">
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="randomizeSeeds" class="btn">Náhodně</button>
+          <button id="pfClose" class="btn ghost">Zavřít</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div class="muted" style="font-size:12px">Výsledek: <span class="mono">roll = (HMAC_SHA256(serverSeed, `${clientSeed}:${nonce}`)[0..3] / 2^32) × 100</span> (0–99.99). Každá sázka zvyšuje nonce o 1.</div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+<script>
+(() => {
+  // ===== State =====
+  const s = {
+    balance: 1000, bet: 10,
+    uo: 'under',          // 'under' | 'over'
+    houseEdge: 1.0,       // %
+    chance: 49.00,        // win chance (%)
+    target: 49.00,        // derived from chance & uo
+    serverSeed: '', clientSeed: '', nonce: 0,
+    myBets: [],
+    rolling: false,
+  };
+
+  // ===== Elements =====
+  const el = {
+    heTop: q('#heTop'), ruleTop: q('#ruleTop'),
+    balance: q('#balance'), balanceBox: q('#balanceBox'),
+    bPlus100: q('#b_plus_100'), bPlus1000: q('#b_plus_1000'), bReset: q('#b_reset'),
+
+    betAmount: q('#betAmount'), betBtns: qa('[data-bet]'),
+    houseEdge: q('#houseEdge'),
+    uoToggle: q('#uoToggle'),
+
+    line: q('#line'), segWin: q('#segWin'), segLose: q('#segLose'),
+    handle: q('#handle'),
+    marker: q('#marker'), markerRoll: q('#markerRoll'), markerBet: q('#markerBet'),
+
+    rollBtn: q('#rollBtn'),
+    payoutOut: q('#payoutOut'), chanceOut: q('#chanceOut'), targetOut: q('#targetOut'),
+
+    tableMine: q('#tableMine'), history: q('#history'),
+
+    pfBtn: q('#pfBtn'), pfDialog: q('#pfDialog'), pfClose: q('#pfClose'),
+    serverSeed: q('#serverSeed'), clientSeed: q('#clientSeed'), nonce: q('#nonce'), randomizeSeeds: q('#randomizeSeeds'),
+  };
+
+  // ===== Utils =====
+  function q(s, r=document){ return r.querySelector(s); }
+  function qa(s, r=document){ return Array.from(r.querySelectorAll(s)); }
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+  const fmt2 = n => (Math.round(n*100)/100).toFixed(2);
+  function nowTime(){ const d=new Date(); return d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
+  function updateBalanceView(){ el.balance.textContent = s.balance.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function creditAnimation(amount){
+    const tag = document.createElement('div');
+    tag.className = 'creditFloat';
+    tag.textContent = `+${amount.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    el.balanceBox.appendChild(tag);
+    el.balanceBox.classList.remove('balancePulse'); void el.balanceBox.offsetWidth; el.balanceBox.classList.add('balancePulse');
+    setTimeout(()=> tag.remove(), 1000);
+  }
+
+  // ===== Line + handle drawing =====
+  function drawLine(){
+    s.target = (s.uo==='under') ? s.chance : (100 - s.chance);
+
+    // segments (percent-based, no viewport math)
+    const winLeft = (s.uo==='under') ? 0 : s.target;
+    const winWidth = (s.uo==='under') ? s.target : (100 - s.target);
+    const loseLeft = (s.uo==='under') ? s.target : 0;
+    const loseWidth = (s.uo==='under') ? (100 - s.target) : s.target;
+
+    el.segWin.style.left = winLeft + '%';
+    el.segWin.style.width = winWidth + '%';
+    el.segLose.style.left = loseLeft + '%';
+    el.segLose.style.width = loseWidth + '%';
+
+    el.handle.style.left = s.target + '%';
+
+    // side outputs
+    const payout = ((100 - s.houseEdge) / s.chance);
+    el.payoutOut.textContent = '× ' + fmt2(payout);
+    el.chanceOut.textContent = fmt2(s.chance) + ' %';
+    el.targetOut.textContent = fmt2(s.target);
+
+    el.ruleTop.textContent = (s.uo==='under' ? 'Under' : 'Over') + ` (target ${fmt2(s.target)})`;
+    el.heTop.textContent = fmt2(s.houseEdge) + '%';
+  }
+
+  function posToChance(clientX){
+    const r = el.line.getBoundingClientRect();
+    let p = clamp((clientX - r.left) / r.width, 0, 1);
+    const target = p*100;
+    s.chance = (s.uo==='under') ? target : (100 - target);
+    s.chance = clamp(s.chance, 1, 99);
+    drawLine();
+  }
+  function startDrag(e){
+    e.preventDefault();
+    const move = ev => posToChance(('touches' in ev ? ev.touches[0].clientX : ev.clientX));
+    const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('touchmove', move); window.removeEventListener('mouseup', up); window.removeEventListener('touchend', up); };
+    window.addEventListener('mousemove', move); window.addEventListener('touchmove', move, {passive:false}); window.addEventListener('mouseup', up); window.addEventListener('touchend', up);
+    move('touches' in e ? e : {clientX:e.clientX});
+  }
+
+  el.handle.addEventListener('mousedown', startDrag);
+  el.handle.addEventListener('touchstart', startDrag, {passive:false});
+  el.line.addEventListener('mousedown', e=>{ if(e.target!==el.handle) posToChance(e.clientX); });
+  el.line.addEventListener('touchstart', e=>{ if(e.target!==el.handle) posToChance(e.touches[0].clientX); }, {passive:true});
+
+  // ===== Provably fair =====
+  async function hmacSha256(keyBytes, msgBytes){
+    const key = await crypto.subtle.importKey('raw', keyBytes, {name:'HMAC', hash:'SHA-256'}, false, ['sign']);
+    const sig = await crypto.subtle.sign('HMAC', key, msgBytes);
+    return new Uint8Array(sig);
+  }
+  function enc(s){ return new TextEncoder().encode(s); }
+  function randHex(len=64){ const a=new Uint8Array(len/2); crypto.getRandomValues(a); return Array.from(a,b=>b.toString(16).padStart(2,'0')).join(''); }
+  function hexToBytes(hex){ const c=hex.replace(/[^0-9a-f]/gi,''); const out=new Uint8Array(c.length/2); for(let i=0;i<out.length;i++) out[i]=parseInt(c.substr(i*2,2),16); return out; }
+  async function pfRoll(serverSeed, clientSeed, nonce){
+    const msg = `${clientSeed}:${nonce}`;
+    const sig = await hmacSha256(hexToBytes(serverSeed), enc(msg));
+    const v = (sig[0]<<24 | sig[1]<<16 | sig[2]<<8 | sig[3]) >>> 0;
+    const roll = (v / 2**32) * 100;
+    return Math.floor(roll*100)/100;
+  }
+
+  // ===== Bets table & history =====
+  function renderMine(){
+    const rows = s.myBets.slice(0,200);
+    const headers = ['Čas','Sázka','Pravidlo','Výsledek','Stav','Výhra'];
+    const html = [
+      '<div style="overflow:auto"><table><thead><tr>',
+      ...headers.map(h=>`<th>${h}</th>`),
+      '</tr></thead><tbody>',
+      ...rows.map(r=>{
+        const cls = r.win?'win':'lose';
+        return `<tr>
+          <td>${r.time}</td>
+          <td>${fmt2(r.bet)}</td>
+          <td>${r.rule}</td>
+          <td>${r.roll.toFixed(2)}</td>
+          <td class="${cls}">${r.win?'WIN':'LOSE'}</td>
+          <td class="${cls}">${r.win?fmt2(r.payout*r.bet):'0.00'}</td>
+        </tr>`;
+      }),
+      '</tbody></table></div>'
+    ].join('');
+    el.tableMine.innerHTML = html;
+  }
+  function pushHistory(win, value){
+    const dot = document.createElement('div');
+    dot.className = 'dot ' + (win?'win':'lose');
+    dot.textContent = value.toFixed(2);
+    el.history.prepend(dot);
+    while(el.history.childElementCount>120) el.history.removeChild(el.history.lastChild);
+  }
+
+  // ===== Roll flow =====
+  function setDisabled(dis){
+    el.rollBtn.disabled = dis;
+    qa('input,button,select').forEach(x=>{
+      if (x===el.rollBtn || x===el.pfClose) return;
+      if (dis) x.setAttribute('data-prevdis','1'), x.disabled = true;
+      else if (x.hasAttribute('data-prevdis')) { x.disabled=false; x.removeAttribute('data-prevdis'); }
+    });
+  }
+
+  async function doRoll(){
+    if (s.rolling) return;
+    s.bet = Math.max(0, Number(el.betAmount.value)||0);
+    if (s.bet<=0){ flash(el.betAmount); return; }
+    if (s.bet > s.balance){ flash(el.balance); return; }
+
+    s.rolling = true; setDisabled(true);
+
+   // Připrav marker – vždy start z LEVÉHO kraje
+const m = el.marker;
+m.style.display = 'block';
+m.className = 'marker';
+el.markerRoll.textContent = '…';
+el.markerBet.textContent = 'Bet: ' + fmt2(s.bet);
+
+// 1) Vypnout přechod a resetnout pozici na levý okraj
+m.style.transition = 'none';
+m.style.left = '0%';
+m.style.transform = 'translate(-50%,-100%)';
+
+// Force reflow, ať se reset aplikuje
+void m.offsetWidth;
+
+// 2) Vypočti výsledek a cílové % (jako už děláš)
+const roll = await pfRoll(s.serverSeed, s.clientSeed, s.nonce);
+s.nonce++;
+const pct = Math.max(0, Math.min(99.99, roll));
+
+// 3) Zapnout přechod a spustit jízdu zleva → na cíl
+m.style.transition = 'left 0.9s cubic-bezier(.2,.8,.2,1), transform 0.9s cubic-bezier(.2,.8,.2,1)';
+el.markerRoll.textContent = roll.toFixed(2);
+m.style.left = pct + '%';          // tímto se rozjede animace z 0% na pct%
+m.style.transform = 'translate(-50%,-100%)';
+
+// počkej na dojetí (stejný čas jako v CSS)
+await new Promise(r=>setTimeout(r, 950));
+
+// ... dál beze změn: win/lose, barvy, balance, log atd.
+
+
+    // Vyhodnocení
+    const win = (s.uo==='under') ? (roll < s.target) : (roll > s.target);
+    const payout = ((100 - s.houseEdge) / s.chance);
+    const won = win ? s.bet * payout : 0;
+
+    el.marker.classList.add(win ? 'win' : 'lose');
+
+    // Balance update
+    const delta = (win ? won : 0) - s.bet;
+    s.balance += delta; updateBalanceView();
+    if (won>0) creditAnimation(won);
+
+    // Log
+    const rule = (s.uo==='under'?'Under ':'Over ') + fmt2(s.target);
+    s.myBets.unshift({ time: nowTime(), bet: s.bet, rule, roll, win, payout });
+    renderMine(); pushHistory(win, roll);
+
+    setDisabled(false); s.rolling = false;
+  }
+
+  // ===== Events =====
+  el.rollBtn.addEventListener('click', doRoll);
+
+  el.betBtns.forEach(b=>b.addEventListener('click', ()=>{
+    const a = b.getAttribute('data-bet'); let v = Number(el.betAmount.value)||0;
+    if (a==='+1') v+=1; else if (a==='+10') v+=10; else if (a==='+100') v+=100;
+    else if (a==='half') v/=2; else if (a==='double') v*=2; else if (a==='max') v = s.balance;
+    el.betAmount.value = fmt2(Math.max(0,v));
+  }));
+
+  el.houseEdge.addEventListener('input', ()=>{ s.houseEdge = clamp(Number(el.houseEdge.value)||s.houseEdge, 0, 5); drawLine(); });
+
+  qa('#uoToggle .toggle').forEach(t=>t.addEventListener('click', ()=>{
+    qa('#uoToggle .toggle').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active'); s.uo = t.dataset.uo; drawLine();
+  }));
+
+  // Handle drag listeners už výše
+
+  // PF dialog
+  el.pfBtn.addEventListener('click', ()=> el.pfDialog.showModal());
+  el.pfClose.addEventListener('click', ()=> el.pfDialog.close());
+  el.randomizeSeeds.addEventListener('click', ()=>{
+    s.serverSeed = randHex(64); s.clientSeed = randHex(32); s.nonce = 0;
+    el.serverSeed.value = s.serverSeed; el.clientSeed.value = s.clientSeed; el.nonce.value = s.nonce;
+  });
+  el.serverSeed.addEventListener('input', ()=> s.serverSeed = el.serverSeed.value.trim());
+  el.clientSeed.addEventListener('input', ()=> s.clientSeed = el.clientSeed.value.trim());
+  el.nonce.addEventListener('input', ()=> s.nonce = Math.max(0, Number(el.nonce.value)||0));
+
+  // ===== Init =====
+  function initSeeds(){
+    s.serverSeed = randHex(64); s.clientSeed = randHex(32); s.nonce = 0;
+    el.serverSeed.value = s.serverSeed; el.clientSeed.value = s.clientSeed; el.nonce.value = s.nonce;
+  }
+  function init(){
+    updateBalanceView();
+    initSeeds();
+    drawLine();
+    renderMine();
+  }
+  init();
+
+  // Balance tlačítka
+  el.bPlus100.addEventListener('click', ()=>{ s.balance+=100; updateBalanceView(); });
+  el.bPlus1000.addEventListener('click', ()=>{ s.balance+=1000; updateBalanceView(); });
+  el.bReset.addEventListener('click', ()=>{ s.balance=1000; updateBalanceView(); });
+
+  // ===== Helpers =====
+  function flash(elm){ const o=elm.style.outline; elm.style.outline='2px solid var(--gold)'; setTimeout(()=>elm.style.outline=o,350); }
+})();
+</script>
+</body>
+</html>
