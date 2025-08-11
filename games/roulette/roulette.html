@@ -115,7 +115,6 @@
     <div class="balance-pill">
       <strong>Balance</strong>
       <input id="balance" type="text" inputmode="decimal" aria-label="Zůstatek" />
-      <button id="balanceReset" title="Reset na 1000.00">↺</button>
     </div>
   </header>
 
@@ -162,8 +161,8 @@
             <input type="checkbox" id="pf-enable" /> Provably‑fair (HMAC)
           </label>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
-          <input id="client-seed" placeholder="Client seed (volitelné)" />
+        <div style="display:grid; grid-template-columns:1fr; gap:8px">
+          <input id="client-seed" placeholder="Client seed (volitelné)" style="display:none" />
           <button id="new-seed">Nový server seed</button>
         </div>
       </div>
@@ -240,7 +239,6 @@
 
   // ====== DOM refs ======
   const balanceInput = document.getElementById('balance');
-  const balanceReset = document.getElementById('balanceReset');
   const tableEl = document.getElementById('table');
   const chipsRow = document.getElementById('chips');
   const chipsMobile = document.getElementById('chips-mobile');
@@ -843,7 +841,6 @@
   mClear.addEventListener('click', clearAllBets);
 
   balanceInput.addEventListener('change', ()=>{ const c=toCents(balanceInput.value); if(!isNaN(c)){ balance=c; persistBalance(); updateBalanceUI(); }});
-  balanceReset.addEventListener('click', ()=>{ balance=100000; persistBalance(); updateBalanceUI(); });
   clientSeedInput.addEventListener('change', ()=>{ clientSeed=clientSeedInput.value; localStorage.setItem(STORAGE_KEYS.client, clientSeed); });
 
   // ====== Init ======
