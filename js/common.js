@@ -181,30 +181,16 @@ function bindWallet(){
 function bindProvablyFair(){
   const modal = $("#pf-modal");
   if(!modal) return;
-  $("#pf-open")?.addEventListener("click", ()=> modal.classList.add("open"));
+  const update = () => {
+    const s = Seeds.get();
+    $("#pf-server").textContent = s.server;
+    $("#pf-client").textContent = s.client;
+    $("#pf-nonce").textContent = s.nonce;
+  };
+  $("#pf-open")?.addEventListener("click", ()=>{ update(); modal.classList.add("open"); });
   modal.querySelector(".overlay")?.addEventListener("click", ()=> modal.classList.remove("open"));
   modal.querySelector(".close")?.addEventListener("click", ()=> modal.classList.remove("open"));
-  const s = Seeds.get();
-  $("#pf-server").textContent = s.server;
-  $("#pf-client").value = s.client;
-  $("#pf-nonce").textContent = s.nonce;
-  $("#pf-save").addEventListener("click", ()=>{
-    const curr = Seeds.get();
-    curr.client = $("#pf-client").value.trim() || curr.client;
-    Seeds.set(curr);
-    $("#pf-nonce").textContent = curr.nonce;
-    pushNotify("Client seed uložen.");
-  });
-  $("#pf-rotate").addEventListener("click", ()=>{
-    if(confirm("Otočením seedů změníš posloupnost výsledků všech her. Pokračovat?")){
-      Seeds.rotate();
-      const n = Seeds.get();
-      $("#pf-server").textContent = n.server;
-      $("#pf-client").value = n.client;
-      $("#pf-nonce").textContent = n.nonce;
-      pushNotify("Seeds byly otočeny.");
-    }
-  });
+  update();
 }
 
 // Bet helpers

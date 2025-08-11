@@ -115,7 +115,6 @@
     <div class="balance-pill">
       <strong>Balance</strong>
       <input id="balance" type="text" inputmode="decimal" aria-label="Zůstatek" />
-      <button id="balanceReset" title="Reset na 1000.00">↺</button>
     </div>
   </header>
 
@@ -162,10 +161,7 @@
             <input type="checkbox" id="pf-enable" /> Provably‑fair (HMAC)
           </label>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
-          <input id="client-seed" placeholder="Client seed (volitelné)" />
-          <button id="new-seed">Nový server seed</button>
-        </div>
+        <input id="client-seed" placeholder="Client seed (volitelné)" style="display:none" />
       </div>
     </section>
 
@@ -240,7 +236,6 @@
 
   // ====== DOM refs ======
   const balanceInput = document.getElementById('balance');
-  const balanceReset = document.getElementById('balanceReset');
   const tableEl = document.getElementById('table');
   const chipsRow = document.getElementById('chips');
   const chipsMobile = document.getElementById('chips-mobile');
@@ -260,7 +255,6 @@
   const nonceEl = document.getElementById('nonce');
   const pfEnable = document.getElementById('pf-enable');
   const clientSeedInput = document.getElementById('client-seed');
-  const newSeedBtn = document.getElementById('new-seed');
   const chipCustomInput = document.getElementById('chip-custom-value');
   const chipAddBtn = document.getElementById('chip-add-btn');
   const mClear = document.getElementById('m-clear');
@@ -837,13 +831,11 @@
   btnRedo.addEventListener('click', redo); mRedo.addEventListener('click', redo);
   btnRepeat.addEventListener('click', repeatBets); mRepeat.addEventListener('click', repeatBets);
   btnDouble.addEventListener('click', doubleBets); mDouble.addEventListener('click', doubleBets);
-  newSeedBtn.addEventListener('click', newServerSeed);
   chipAddBtn.addEventListener('click', addCustomChip);
   chipCustomInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ addCustomChip(); }});
   mClear.addEventListener('click', clearAllBets);
 
   balanceInput.addEventListener('change', ()=>{ const c=toCents(balanceInput.value); if(!isNaN(c)){ balance=c; persistBalance(); updateBalanceUI(); }});
-  balanceReset.addEventListener('click', ()=>{ balance=100000; persistBalance(); updateBalanceUI(); });
   clientSeedInput.addEventListener('change', ()=>{ clientSeed=clientSeedInput.value; localStorage.setItem(STORAGE_KEYS.client, clientSeed); });
 
   // ====== Init ======
