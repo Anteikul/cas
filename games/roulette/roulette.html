@@ -197,7 +197,6 @@
 
   <div class="toast" id="toast"></div>
 
-<script src="../wallet.js"></script>
 <script>
   // ====== Data & constants ======
   const WHEEL = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
@@ -212,14 +211,14 @@
   const HIGH = new Set(Array.from({length:18},(_,i)=>i+19));
 
   let CHIP_VALUES = [1,5,25,100,500,1000]; // v centech: 0.01–10.00
-  const STORAGE_KEYS = { seed:'roulette_server_seed', nonce:'roulette_nonce', client:'roulette_client_seed' };
+  const STORAGE_KEYS = { bal:'roulette_balance_cents', seed:'roulette_server_seed', nonce:'roulette_nonce', client:'roulette_client_seed' };
 
   // Money helpers (int cents only)
   const toCents = v => Math.round(parseFloat(String(v).replace(/[^0-9.\-]/g,'')||'0')*100);
   const fmt = cents => (cents/100).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
 
   // State
-  let balance = wallet.get();
+  let balance = parseInt(localStorage.getItem(STORAGE_KEYS.bal) || '100000', 10); // 1000.00
   let serverSeed = localStorage.getItem(STORAGE_KEYS.seed) || crypto.getRandomValues(new Uint32Array(4)).join('-');
   let clientSeed = localStorage.getItem(STORAGE_KEYS.client) || '';
   let nonce = parseInt(localStorage.getItem(STORAGE_KEYS.nonce) || '0', 10);
@@ -258,7 +257,6 @@
   const chipCustomInput = document.getElementById('chip-custom-value');
   const chipAddBtn = document.getElementById('chip-add-btn');
   const mClear = document.getElementById('m-clear');
-  const lobbyBtn = document.getElementById('btn-lobby');
 
   // ====== Wheel rendering ======
   const wheelSVG = document.getElementById('wheel');
@@ -319,7 +317,7 @@
     ballGroup.innerHTML = '';
     const ball = document.createElementNS('http://www.w3.org/2000/svg','circle');
     ball.setAttribute('r', 6); ball.setAttribute('fill', '#dbe9ff');
-    ball.setAttribute('stroke', '#ffffff'); ball.setAttribute('stroke-width', '1');
+    ball.setAttribute('stroke', '#ffffff'); ball.setAttribute('stroke-width','1');
     ball.setAttribute('id','ball');
     ballGroup.appendChild(ball);
 
@@ -819,7 +817,7 @@
 
   // ====== UI helpers ======
   function updateBalanceUI(){ balanceInput.value = fmt(balance); }
-  function persistBalance(){ wallet.set(balance); }
+  function persistBalance(){ localStorage.setItem(STORAGE_KEYS.bal, String(balance)); }
   function showToast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); clearTimeout(showToast._t); showToast._t=setTimeout(()=>toastEl.classList.remove('show'), 2600); }
   function lockUI(state){ btnSpin.disabled=state; mSpin.disabled=state; document.querySelectorAll('.cell').forEach(c=>c.disabled=state); }
 
@@ -836,12 +834,10 @@
   chipAddBtn.addEventListener('click', addCustomChip);
   chipCustomInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ addCustomChip(); }});
   mClear.addEventListener('click', clearAllBets);
-  lobbyBtn.addEventListener('click', ()=>{ window.location.href = '../index.html'; });
 
-  balanceInput.addEventListener('change', ()=>{ const c=toCents(balanceInput.value); if(!isNaN(c)){ wallet.set(c); }});
-  balanceReset.addEventListener('click', ()=>{ wallet.reset(); });
+  balanceInput.addEventListener('change', ()=>{ const c=toCents(balanceInput.value); if(!isNaN(c)){ balance=c; persistBalance(); updateBalanceUI(); }});
+  balanceReset.addEventListener('click', ()=>{ balance=100000; persistBalance(); updateBalanceUI(); });
   clientSeedInput.addEventListener('change', ()=>{ clientSeed=clientSeedInput.value; localStorage.setItem(STORAGE_KEYS.client, clientSeed); });
-  wallet.onChange(b=>{ balance = b; updateBalanceUI(); });
 
   // ====== Init ======
   renderWheel();
