@@ -71,11 +71,13 @@
   .spin-btn[disabled]{opacity:.6; cursor:not-allowed}
 
   /* Right: History */
-  .history-panel{padding:12px; display:grid; gap:12px}
-  .history-list{display:grid; gap:6px; max-height:220px; overflow:auto; padding-right:6px}
+  .history-panel{padding:12px; display:flex; flex-direction:column; gap:12px}
+  .history-list{display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; padding-right:6px}
   .hist-item{display:flex; align-items:center; gap:8px; padding:8px; background:#0e1524; border:1px solid var(--edge); border-radius:12px}
   .ball{width:18px; height:18px; border-radius:99px; background:#d9e7ff; box-shadow:0 0 10px rgba(255,255,255,.6)}
   .badge{padding:2px 8px; border-radius:999px; background:#0f1626; border:1px solid var(--edge); color:var(--muted); font-weight:700}
+
+  .info-box{color:var(--muted); font-size:12px; display:grid; gap:6px}
 
   /* Highlights */
   .cell.win{outline:2px solid #5aa7ff; box-shadow:0 0 0 2px rgba(90,167,255,.35) inset, 0 0 12px rgba(90,167,255,.35);}
@@ -171,12 +173,10 @@
       <div id="history" class="history-list" aria-live="polite"></div>
 
       <h3>Info</h3>
-      <div class="panel" style="padding:10px">
-        <div style="color:var(--muted); font-size:12px; display:grid; gap:6px">
-          <div>EU (single‑zero) pořadí kapes: <code>0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26</code></div>
-          <div>Výplaty: Straight 35:1 · Dozen/Column 2:1 · Red/Black/Even/Odd/Low/High 1:1</div>
-          <div>Tip: Pravé kliknutí na políčko = odebrat vybraný žeton. Dlouhý stisk na mobilu také odebere.</div>
-        </div>
+      <div class="info-box">
+        <div>EU (single‑zero) pořadí kapes: <code>0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26</code></div>
+        <div>Výplaty: Straight 35:1 · Dozen/Column 2:1 · Red/Black/Even/Odd/Low/High 1:1</div>
+        <div>Tip: Pravé kliknutí na políčko = odebrat vybraný žeton. Dlouhý stisk na mobilu také odebere.</div>
       </div>
     </aside>
   </main>
