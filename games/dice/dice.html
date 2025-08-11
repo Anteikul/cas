@@ -29,7 +29,6 @@
   .brand{font-weight:700}
   .pill{display:inline-flex;align-items:center;gap:8px;background:#0d1729;border:1px solid var(--edge);border-radius:999px;padding:6px 10px}
   .balanceBox{position:relative;margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#0d1729;border:1px solid var(--edge);border-radius:999px}
-  .bBtns .btn{padding:6px 10px}
   .creditFloat{
     position:absolute; right:12px; top:-4px; font-weight:700; pointer-events:none; opacity:0; transform:translateY(0);
     background:rgba(58,224,143,.12); border:1px solid rgba(58,224,143,.4); padding:4px 8px; border-radius:8px; color:var(--good);
@@ -119,6 +118,21 @@
     border-top:7px solid #0d1729;
     filter: drop-shadow(0 -1px 0 rgba(26,40,67,1));
   }
+
+  /* --- Unified Lobby button --- */
+  .lobby-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:10px 12px;
+    border:1px solid var(--edge);
+    border-radius:12px;
+    background:transparent;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:600;
+    cursor:pointer;
+    width:auto; min-width:0;
+  }
+  .lobby-btn:hover{ background:rgba(255,255,255,.04) }
   .marker .roll{font-weight:800; font-size:16px}
   .marker .bet{font-size:12px; color:var(--muted)}
   .marker.win{outline:2px solid var(--good)}
@@ -136,16 +150,12 @@
 
   <!-- TOP -->
   <div class="topbar">
+    <a class="lobby-btn" href="../../index.html">← Lobby</a>
     <div class="brand">🎲 Dice (Mines skin)</div>
     <div class="pill">HE: <strong id="heTop">1.00%</strong></div>
     <div class="pill">Pravidlo: <strong id="ruleTop">Under (target 49.00)</strong></div>
     <div class="balanceBox" id="balanceBox">
-      <span>Balance:</span> <strong id="balance">1 000.00</strong>
-      <div class="bBtns">
-        <button id="b_plus_100" class="btn ghost">+100</button>
-        <button id="b_plus_1000" class="btn ghost">+1 000</button>
-        <button id="b_reset" class="btn ghost">Reset</button>
-      </div>
+      <span>Balance:</span> <strong id="balance" class="balance-amount">1 000.00</strong>
     </div>
   </div>
 
@@ -264,9 +274,14 @@
 
 <script>
 (() => {
+  // ===== Shared wallet =====
+  const WALLET_KEY = 'wallet.balance';
+  function walletGet(){ try{ return Number(JSON.parse(localStorage.getItem(WALLET_KEY))||1000) }catch{ return 1000 } }
+  function walletSet(v){ localStorage.setItem(WALLET_KEY, JSON.stringify(Math.max(0, Number(v)||0))); }
+
   // ===== State =====
   const s = {
-    balance: 1000, bet: 10,
+    balance: walletGet(), bet: 10,
     uo: 'under',          // 'under' | 'over'
     houseEdge: 1.0,       // %
     chance: 49.00,        // win chance (%)
@@ -280,7 +295,6 @@
   const el = {
     heTop: q('#heTop'), ruleTop: q('#ruleTop'),
     balance: q('#balance'), balanceBox: q('#balanceBox'),
-    bPlus100: q('#b_plus_100'), bPlus1000: q('#b_plus_1000'), bReset: q('#b_reset'),
 
     betAmount: q('#betAmount'), betBtns: qa('[data-bet]'),
     houseEdge: q('#houseEdge'),
@@ -305,7 +319,7 @@
   const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
   const fmt2 = n => (Math.round(n*100)/100).toFixed(2);
   function nowTime(){ const d=new Date(); return d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
-  function updateBalanceView(){ el.balance.textContent = s.balance.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function updateBalanceView(){ s.balance = walletGet(); el.balance.textContent = s.balance.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function creditAnimation(amount){
     const tag = document.createElement('div');
     tag.className = 'creditFloat';
@@ -470,7 +484,9 @@ await new Promise(r=>setTimeout(r, 950));
 
     // Balance update
     const delta = (win ? won : 0) - s.bet;
-    s.balance += delta; updateBalanceView();
+    s.balance += delta;
+    walletSet(s.balance);
+    updateBalanceView();
     if (won>0) creditAnimation(won);
 
     // Log
@@ -518,16 +534,12 @@ await new Promise(r=>setTimeout(r, 950));
   }
   function init(){
     updateBalanceView();
+    walletSet(s.balance);
     initSeeds();
     drawLine();
     renderMine();
   }
   init();
-
-  // Balance tlačítka
-  el.bPlus100.addEventListener('click', ()=>{ s.balance+=100; updateBalanceView(); });
-  el.bPlus1000.addEventListener('click', ()=>{ s.balance+=1000; updateBalanceView(); });
-  el.bReset.addEventListener('click', ()=>{ s.balance=1000; updateBalanceView(); });
 
   // ===== Helpers =====
   function flash(elm){ const o=elm.style.outline; elm.style.outline='2px solid var(--gold)'; setTimeout(()=>elm.style.outline=o,350); }
