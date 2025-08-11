@@ -1,0 +1,17 @@
+.lobby-row{margin-bottom:8px}
+.lobby-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:10px 12px;
+  border:1px solid var(--edge);
+  border-radius:12px;
+  background:transparent;
+  color:var(--text);
+  text-decoration:none;
+  font-weight:600;
+  cursor:pointer;
+  width:auto;
+  min-width:0;
+}
+.lobby-btn:hover{background:rgba(255,255,255,.04)}

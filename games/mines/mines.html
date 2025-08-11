@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Mines – Full Local Simulator (v3)</title>
+<link rel="stylesheet" href="../../css/game.css" />
 <style>
   :root{ --bg-0:#0b0f14; --bg-1:#121a22; --edge:#1b2a36; --accent:#3cd17f; --accent-2:#4ec3ff; --warn:#f5b047; --danger:#ff4d4d; --text:#e7f1fb; --muted:#97a6b5 }
   *{box-sizing:border-box}
@@ -57,31 +58,6 @@
   .switch input:checked + .dot{ background:#193a2a }
   .switch input:checked + .dot::after{ left:16px; background:#3cd17f }
   .disclaimer{ font-size:12px; color:var(--muted); border-left:3px solid var(--warn); padding-left:10px }
-
-  .backbtn{ position:fixed; top:14px; left:14px; z-index:50; padding:8px 12px; border-radius:10px;
-    border:1px solid #1b2a36; background:rgba(255,255,255,.06); color:#e7f1fb; text-decoration:none;
-    box-shadow:0 8px 18px rgba(0,0,0,.35); backdrop-filter: blur(6px); }
-  .backbtn:hover{ background:rgba(255,255,255,.1) }
-
-  /* --- Unified Lobby button --- */
-  .lobby-row{ margin-bottom:8px }
-  .lobby-btn{ display:inline-flex; align-items:center; gap:6px; width:auto !important; min-width:0; padding:10px 12px }
-
-  /* Unified Lobby button (self-contained) */
-  .lobby-row{ margin-bottom:8px }
-  .lobby-btn{
-    display:inline-flex; align-items:center; gap:6px;
-    padding:10px 12px;
-    border:1px solid var(--edge);
-    border-radius:12px;
-    background:transparent;
-    color:var(--text);
-    text-decoration:none;
-    font-weight:600;
-    cursor:pointer;
-    width:auto; min-width:0;
-  }
-  .lobby-btn:hover{ background:rgba(255,255,255,.04) }
 
 </style>
 </head>

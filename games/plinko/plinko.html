@@ -5,6 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Plinko – smooth physics, fair 50/50, working pegs</title>
+<link rel="stylesheet" href="../../css/game.css" />
 <style>
   :root{ color-scheme: dark }
   #plinko-game{ --bg:#0b0f14; --panel:#121825; --edge:#1c2940; --chip:#172235; --text:#e7f1fb; --muted:#9bb0c9; --good:#35d18a; --bad:#ff6b6b; --accent:#5aa7ff }
@@ -50,26 +51,6 @@
   }
 
 
-  /* --- Unified Lobby button --- */
-  .lobby-row{ margin-bottom:8px }
-  .lobby-btn{ display:inline-flex; align-items:center; gap:6px; width:auto !important; min-width:0; padding:10px 12px }
-
-  /* Unified Lobby button (self-contained) */
-  .lobby-row{ margin-bottom:8px }
-  .lobby-btn{
-    display:inline-flex; align-items:center; gap:6px;
-    padding:10px 12px;
-    border:1px solid var(--edge);
-    border-radius:12px;
-    background:transparent;
-    color:var(--text);
-    text-decoration:none;
-    font-weight:600;
-    cursor:pointer;
-    width:auto; min-width:0;
-  }
-  .lobby-btn:hover{ background:rgba(255,255,255,.04) }
-
 
   /* --- Make Plinko match Mines UI more closely --- */
   #plinko-game .wrap{
@@ -109,23 +90,6 @@
   @media(max-width:1100px){
     #plinko-game .history{ height:60vh }
   }
-
-
-  /* Unified Lobby button (self-contained) */
-  #plinko-game .lobby-row{ margin-bottom:8px }
-  #plinko-game .lobby-btn{
-    display:inline-flex; align-items:center; gap:6px;
-    padding:10px 12px;
-    border:1px solid var(--edge);
-    border-radius:12px;
-    background:transparent;
-    color:var(--text);
-    text-decoration:none;
-    font-weight:600;
-    cursor:pointer;
-    width:auto; min-width:0;
-  }
-  #plinko-game .lobby-btn:hover{ background:rgba(255,255,255,.04) }
 
 
   /* --- Responsive layout to mirror Mines --- */
