@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Webová ruleta – EU (single‑zero)</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#121825; --edge:#1c2940; --muted:#9bb0c9; --text:#e7f1fb;
+    --accent:#5aa7ff; --good:#35d18a; --bad:#ff6b6b; --chip:#172235; --gold:#ffd266;
+  }
+  html,body{height:100%}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -10%, #162238 0%, transparent 50%), var(--bg);
+       color:var(--text); font:14px/1.35 system-ui, Segoe UI, Roboto, Inter, sans-serif}
+  *{box-sizing:border-box}
+  button{cursor:pointer}
+  /* Layout */
+  .wrap{display:grid; grid-template-columns:340px 1fr 320px; gap:16px; padding:16px}
+  @media (max-width:1100px){.wrap{grid-template-columns:1fr; padding-bottom:86px}}
+
+  header.appbar{position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:12px;
+    padding:10px 16px; background:linear-gradient(#0d141f, #0b0f14); border-bottom:1px solid var(--edge);}  
+  .lobby-btn{appearance:none; border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 20%, #0b0f14), #0b1220);
+    color:var(--text); padding:8px 12px; border-radius:12px; font-weight:600; display:inline-flex; align-items:center; gap:8px;
+    box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 8px 24px rgba(0,0,0,.25)}
+  .lobby-btn .dot{width:8px; height:8px; border-radius:99px; background:var(--accent); box-shadow:0 0 8px var(--accent)}
+  .balance-pill{margin-left:auto; display:flex; align-items:center; gap:8px; padding:6px 10px; background:#0f1625; border:1px solid var(--edge); border-radius:999px}
+  .balance-pill input{width:120px; background:transparent; border:none; color:var(--text); font-weight:700}
+
+  .panel{background:linear-gradient(180deg, #0f1626, #0b0f14); border:1px solid var(--edge); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .panel h3{margin:0; padding:10px 12px; font-size:13px; letter-spacing:.2px; color:var(--muted); border-bottom:1px solid var(--edge)}
+
+  /* Left: Wheel */
+  .wheel-panel{padding:12px; display:grid; gap:12px; align-content:start}
+  .wheel-box{aspect-ratio:1/1; background:radial-gradient(circle at 50% 40%, #0e1524, #0b0f14 70%);
+    border:1px solid var(--edge); border-radius:16px; display:grid; place-items:center; position:relative; overflow:hidden}
+  svg#wheel{width:100%; height:100%;}
+  .status{display:flex; justify-content:space-between; gap:8px}
+  .status .pill{padding:6px 10px; background:#0f1626; border:1px solid var(--edge); border-radius:999px; color:var(--muted)}
+
+  /* Center: Betting table */
+  .table-panel{padding:12px; display:grid; gap:12px}
+  .betting-grid{display:grid; grid-template-columns:60px repeat(12, 1fr) 60px; gap:6px; grid-auto-rows:48px}
+  .cell{position:relative; user-select:none; display:grid; place-items:center; padding:10px 0; border-radius:10px;
+    background:linear-gradient(180deg,#0e1626,#0b101a); border:1px solid #1a263a; color:var(--text)}
+  .cell.zero{grid-row:1 / span 3; grid-column:1; writing-mode:vertical-rl; text-orientation:mixed; font-weight:700; background:linear-gradient(180deg,#0f6b3e,#0a3a24); border-color:#0d5a35}
+  .cell.number.red{background:linear-gradient(180deg,#3a0e16,#200b0e); border-color:#4a1420}
+  .cell.number.black{background:linear-gradient(180deg,#0d1016,#07090f); border-color:#1c2435}
+  .cell.outside{font-weight:700}
+  .cell:focus-visible{outline:2px solid var(--accent)}
+  .cell .chipstack{position:absolute; inset:auto auto 6px 6px; display:flex; gap:2px; flex-wrap:wrap; max-width:80%}
+  .chip{width:22px; height:22px; display:grid; place-items:center; border-radius:99px; border:2px solid rgba(255,255,255,.25);
+        background:var(--chip); font-size:11px; font-weight:800}
+
+  .controls{display:grid; gap:10px}
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px}
+  .chip-btn{padding:10px 12px; border-radius:12px; border:1px solid var(--edge); background:#0c1220; font-weight:800; color:var(--text)}
+  .chip-btn.active{outline:2px solid var(--accent)}
+  .action-row{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+  .action-row button, .spin-row button{padding:10px 12px; border-radius:12px; border:1px solid var(--edge); background:#0c1220; font-weight:700; color:var(--text)}
+  .spin-row{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center}
+  .spin-btn{background:linear-gradient(180deg, #1e7a48, #135735); border-color:#1e7a48; color:#eafff5}
+  .spin-btn[disabled]{opacity:.6; cursor:not-allowed}
+
+  /* Right: History */
+  .history-panel{padding:12px; display:grid; gap:12px}
+  .history-list{display:grid; gap:6px; max-height:220px; overflow:auto; padding-right:6px}
+  .hist-item{display:flex; align-items:center; gap:8px; padding:8px; background:#0e1524; border:1px solid var(--edge); border-radius:12px}
+  .ball{width:18px; height:18px; border-radius:99px; background:#d9e7ff; box-shadow:0 0 10px rgba(255,255,255,.6)}
+  .badge{padding:2px 8px; border-radius:999px; background:#0f1626; border:1px solid var(--edge); color:var(--muted); font-weight:700}
+
+  /* Highlights */
+  .cell.win{outline:2px solid #5aa7ff; box-shadow:0 0 0 2px rgba(90,167,255,.35) inset, 0 0 12px rgba(90,167,255,.35);}
+  .cell.rowglow{box-shadow:inset 0 0 0 2px rgba(90,167,255,.15); filter:brightness(1.08);}
+  .cell.colglow{box-shadow:inset 0 0 0 2px rgba(90,167,255,.15); filter:brightness(1.08);}  
+
+  /* Toast */
+  .toast{position:fixed; left:50%; bottom:16px; transform:translateX(-50%); background:#0e1524; border:1px solid var(--edge);
+         padding:10px 12px; border-radius:12px; color:var(--text); box-shadow:0 10px 30px rgba(0,0,0,.35); display:none}
+  .toast.show{display:block}
+
+  /* Mobile toolbar */
+  .mobile-toolbar{position:fixed; left:0; right:0; bottom:0; background:#0e1524; border-top:1px solid var(--edge); padding:8px; display:none; gap:8px}
+  @media (max-width:1100px){
+    .mobile-toolbar{display:grid}
+    .chip-row, .action-row, .spin-row{grid-template-columns:repeat(4,1fr)}
+  }
+  /* Red/Black outside buttons distinct */
+  .cell.outside.redbtn{background:linear-gradient(180deg,#5b0f1e,#2a0b12); border-color:#7a1c2b; color:#fff0f0}
+  .cell.outside.blackbtn{background:linear-gradient(180deg,#0e0f12,#07090c); border-color:#1a1f2b; color:#e7f1fb}
+
+  /* Wheel pointer (points downward into the wheel) */
+  .wheel-box .pointer{position:absolute; top:6px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:9px solid transparent; border-right:9px solid transparent; border-bottom:14px solid var(--gold);
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.6)); z-index:5; pointer-events:none}
+
+  /* Custom chip input */
+  .chip-custom{display:flex; gap:8px; align-items:center}
+  .chip-custom input{background:#0c1220; border:1px solid var(--edge); color:var(--text); padding:8px 10px; border-radius:10px; width:140px}
+  .chip-custom button{padding:10px 12px; border-radius:12px; border:1px solid var(--edge); background:#0c1220; font-weight:700; color:var(--text); -webkit-text-fill-color: var(--text);} 
+</style>
+</head>
+<body>
+  <header class="appbar">
+    <button class="lobby-btn" id="btn-lobby" title="Zpět do lobby">
+      <span class="dot"></span>
+      Lobby
+    </button>
+
+    <div class="balance-pill">
+      <strong>Balance</strong>
+      <input id="balance" type="text" inputmode="decimal" aria-label="Zůstatek" />
+      <button id="balanceReset" title="Reset na 1000.00">↺</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- LEFT: WHEEL -->
+    <section class="panel wheel-panel" aria-label="Ruletové kolo">
+      <div class="wheel-box">
+        <svg id="wheel" viewBox="-200 -200 400 400" aria-label="Kolo">
+          <g id="wheelGroup"></g>
+          <g id="pockets"></g>
+          <g id="labels"></g>
+          <g id="ballGroup"></g>
+        </svg>
+        <div class="pointer" aria-hidden="true"></div>
+      </div>
+      <div class="status">
+        <div class="pill">Server seed hash: <span id="seedHash">–</span></div>
+        <div class="pill">Nonce: <span id="nonce">0</span></div>
+      </div>
+    </section>
+
+    <!-- CENTER: TABLE -->
+    <section class="panel table-panel" aria-label="Plátno sázek">
+      <h3>Plátno sázek</h3>
+      <div id="table" class="betting-grid" role="grid" aria-label="Sázkové pole"></div>
+
+      <div class="controls">
+        <div class="chip-row" id="chips" role="group" aria-label="Žetony">
+          <!-- chip buttons injected -->
+        </div>
+        <div class="chip-custom">
+          <input id="chip-custom-value" placeholder="Vlastní žeton (např. 2.50)" inputmode="decimal" />
+          <button id="chip-add-btn" title="Přidat vlastní žeton">+ Přidat</button>
+        </div>
+        <div class="action-row">
+          <button id="btn-undo" title="Krok zpět (Undo)">Undo</button>
+          <button id="btn-redo" title="Krok vpřed (Redo)">Redo</button>
+          <button id="btn-repeat" title="Opakovat minulé sázky">Repeat</button>
+          <button id="btn-double" title="Zdvojnásobit všechny položky">Double</button>
+        </div>
+        <div class="spin-row">
+          <button class="spin-btn" id="btn-spin">Spin</button>
+          <label style="display:flex; align-items:center; gap:8px">
+            <input type="checkbox" id="pf-enable" /> Provably‑fair (HMAC)
+          </label>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+          <input id="client-seed" placeholder="Client seed (volitelné)" />
+          <button id="new-seed">Nový server seed</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: HISTORY -->
+    <aside class="panel history-panel" aria-label="Historie a výplaty">
+      <h3>Historie</h3>
+      <div id="history" class="history-list" aria-live="polite"></div>
+
+      <h3>Info</h3>
+      <div class="panel" style="padding:10px">
+        <div style="color:var(--muted); font-size:12px; display:grid; gap:6px">
+          <div>EU (single‑zero) pořadí kapes: <code>0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26</code></div>
+          <div>Výplaty: Straight 35:1 · Dozen/Column 2:1 · Red/Black/Even/Odd/Low/High 1:1</div>
+          <div>Tip: Pravé kliknutí na políčko = odebrat vybraný žeton. Dlouhý stisk na mobilu také odebere.</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="mobile-toolbar" id="mobileBar">
+    <div class="chip-row" id="chips-mobile"></div>
+    <div class="action-row">
+      <button id="m-undo">Undo</button>
+      <button id="m-redo">Redo</button>
+      <button id="m-repeat">Repeat</button>
+      <button id="m-double">Double</button>
+    </div>
+    <div class="spin-row">
+      <button class="spin-btn" id="m-spin">Spin</button>
+      <button id="m-clear">Clear</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script src="wallet.js"></script>
+<script>
+  // ====== Data & constants ======
+  const WHEEL = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+  const RED = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+  const COL = { c1: new Set([1,4,7,10,13,16,19,22,25,28,31,34]),
+                c2: new Set([2,5,8,11,14,17,20,23,26,29,32,35]),
+                c3: new Set([3,6,9,12,15,18,21,24,27,30,33,36]) };
+  const DOZ = { d1: new Set(Array.from({length:12},(_,i)=>i+1)),
+                d2: new Set(Array.from({length:12},(_,i)=>i+13)),
+                d3: new Set(Array.from({length:12},(_,i)=>i+25)) };
+  const LOW = new Set(Array.from({length:18},(_,i)=>i+1));
+  const HIGH = new Set(Array.from({length:18},(_,i)=>i+19));
+
+  let CHIP_VALUES = [1,5,25,100,500,1000]; // v centech: 0.01–10.00
+  const STORAGE_KEYS = { seed:'roulette_server_seed', nonce:'roulette_nonce', client:'roulette_client_seed' };
+
+  // Money helpers (int cents only)
+  const toCents = v => Math.round(parseFloat(String(v).replace(/[^0-9.\-]/g,'')||'0')*100);
+  const fmt = cents => (cents/100).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+
+  // State
+  let balance = wallet.get();
+  let serverSeed = localStorage.getItem(STORAGE_KEYS.seed) || crypto.getRandomValues(new Uint32Array(4)).join('-');
+  let clientSeed = localStorage.getItem(STORAGE_KEYS.client) || '';
+  let nonce = parseInt(localStorage.getItem(STORAGE_KEYS.nonce) || '0', 10);
+
+  let selectedChip = 100; // 1.00 CZK/EUR whatever
+
+  const bets = new Map(); // key -> {type, nums:Set, stake:int}
+  let undoStack = [];
+  let redoStack = [];
+  let lastRoundSnapshot = null;
+  let spinning = false;
+
+  // ====== DOM refs ======
+  const balanceInput = document.getElementById('balance');
+  const balanceReset = document.getElementById('balanceReset');
+  const tableEl = document.getElementById('table');
+  const chipsRow = document.getElementById('chips');
+  const chipsMobile = document.getElementById('chips-mobile');
+  const toastEl = document.getElementById('toast');
+  const histEl = document.getElementById('history');
+  const btnSpin = document.getElementById('btn-spin');
+  const mSpin = document.getElementById('m-spin');
+  const btnUndo = document.getElementById('btn-undo');
+  const btnRedo = document.getElementById('btn-redo');
+  const btnRepeat = document.getElementById('btn-repeat');
+  const btnDouble = document.getElementById('btn-double');
+  const mUndo = document.getElementById('m-undo');
+  const mRedo = document.getElementById('m-redo');
+  const mRepeat = document.getElementById('m-repeat');
+  const mDouble = document.getElementById('m-double');
+  const seedHashEl = document.getElementById('seedHash');
+  const nonceEl = document.getElementById('nonce');
+  const pfEnable = document.getElementById('pf-enable');
+  const clientSeedInput = document.getElementById('client-seed');
+  const newSeedBtn = document.getElementById('new-seed');
+  const chipCustomInput = document.getElementById('chip-custom-value');
+  const chipAddBtn = document.getElementById('chip-add-btn');
+  const mClear = document.getElementById('m-clear');
+  const lobbyBtn = document.getElementById('btn-lobby');
+
+  // ====== Wheel rendering ======
+  const wheelSVG = document.getElementById('wheel');
+  const wheelGroup = document.getElementById('wheelGroup');
+  const pocketsGroup = document.getElementById('pockets');
+  const labelsGroup = document.getElementById('labels');
+  const ballGroup = document.getElementById('ballGroup');
+  let labelMeta = []; // {el, midA}
+
+  function renderWheel(){
+    wheelGroup.innerHTML = '';
+    pocketsGroup.innerHTML = '';
+    labelsGroup.innerHTML = '';
+    labelMeta = [];
+    const R = 170; // outer radius
+    const innerR = 120;
+    const textR = 145; // put labels inside wedges
+    const n = WHEEL.length; // 37
+    for(let i=0;i<n;i++){
+      const startA = (i/n)*2*Math.PI - Math.PI/2;
+      const endA = ((i+1)/n)*2*Math.PI - Math.PI/2;
+      const x1 = R*Math.cos(startA), y1 = R*Math.sin(startA);
+      const x2 = R*Math.cos(endA), y2 = R*Math.sin(endA);
+      const xi1 = innerR*Math.cos(startA), yi1 = innerR*Math.sin(startA);
+      const xi2 = innerR*Math.cos(endA), yi2 = innerR*Math.sin(endA);
+      const num = WHEEL[i];
+      const isRed = RED.has(num);
+      const fill = num===0 ? '#0f6b3e' : (isRed ? '#b31b34' : '#0f1522');
+      const d = `M ${xi1} ${yi1} L ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2} L ${xi2} ${yi2} A ${innerR} ${innerR} 0 0 0 ${xi1} ${yi1} Z`;
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', fill);
+      path.setAttribute('stroke', '#1c2940');
+      path.setAttribute('stroke-width', '1');
+      pocketsGroup.appendChild(path);
+      // Number labels (upright, non-rotating text; we only move positions during spin)
+      const midA = (startA+endA)/2;
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('font-size','12');
+      t.setAttribute('font-weight','700');
+      t.setAttribute('fill', '#ffffff');
+      t.setAttribute('stroke', '#000000');
+      t.setAttribute('stroke-width', '2');
+      t.setAttribute('stroke-linejoin','round');
+      t.setAttribute('style','paint-order: stroke');
+      t.textContent = String(num);
+      labelsGroup.appendChild(t);
+      labelMeta.push({el:t, midA});
+    }
+    // Center hub
+    const hub = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    hub.setAttribute('cx',0); hub.setAttribute('cy',0); hub.setAttribute('r', 90);
+    hub.setAttribute('fill', '#0a0f18'); hub.setAttribute('stroke','#1c2940'); hub.setAttribute('stroke-width','2');
+    wheelGroup.appendChild(hub);
+
+    // Ball element
+    ballGroup.innerHTML = '';
+    const ball = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    ball.setAttribute('r', 6); ball.setAttribute('fill', '#dbe9ff');
+    ball.setAttribute('stroke', '#ffffff'); ball.setAttribute('stroke-width', '1');
+    ball.setAttribute('id','ball');
+    ballGroup.appendChild(ball);
+
+    // Initial label positions
+    updateLabelsPositions(textR);
+  }
+
+  // ====== Table rendering ======
+  function makeCell(label, cls, key, nums){
+    const div = document.createElement('button');
+    div.className = `cell ${cls}`;
+    div.textContent = label;
+    div.dataset.key = key;
+    if(nums) div.dataset.nums = JSON.stringify(Array.from(nums));
+    div.addEventListener('click', e=>{ e.preventDefault(); placeChip(div); });
+    div.addEventListener('contextmenu', e=>{ e.preventDefault(); removeChip(div); });
+    // Long press for touch remove
+    let pressT; div.addEventListener('touchstart', ()=>{ pressT=setTimeout(()=>removeChip(div),500); },{passive:true});
+    div.addEventListener('touchend', ()=>clearTimeout(pressT));
+    // Chip stack container
+    const stack = document.createElement('div'); stack.className='chipstack'; div.appendChild(stack);
+    return div;
+  }
+
+  function renderTable(){
+    tableEl.innerHTML = '';
+    // Zero on the left spanning 3 rows
+    const zero = makeCell('0','zero','straight-0', new Set([0]));
+    zero.title = 'Sázka: 0 (straight 35:1)';
+    zero.style.gridColumn = '1';
+    zero.style.gridRow = '1 / span 3';
+    tableEl.appendChild(zero);
+
+    // Numbers arranged as on standard EU table (reference):
+    // Top row: 3,6,9,...,36 ; Middle: 2,5,8,...,35 ; Bottom: 1,4,7,...,34
+    const rows = [
+      Array.from({length:12}, (_,i)=>3*(i+1)),
+      Array.from({length:12}, (_,i)=>3*(i+1)-1),
+      Array.from({length:12}, (_,i)=>3*(i+1)-2),
+    ];
+    rows.forEach((arr, rIdx)=>{
+      arr.forEach((num, i)=>{
+        const c = makeCell(String(num), `number ${RED.has(num)?'red':'black'}`, `straight-${num}`, new Set([num]));
+        c.style.gridRowStart = String(rIdx+1);
+        c.style.gridColumnStart = String(2 + i); // columns after the zero strip
+        tableEl.appendChild(c);
+      });
+    });
+
+    // Right-side column bets "2 to 1" aligned with each number row
+    const colDefs = [ ['2 to 1','col-c3', COL.c3], ['2 to 1','col-c2', COL.c2], ['2 to 1','col-c1', COL.c1] ];
+    colDefs.forEach(([label,key,set], idx)=>{
+      const c = makeCell(label,'outside', key, set);
+      c.style.gridRowStart = String(idx+1);
+      c.style.gridColumnStart = '14';
+      tableEl.appendChild(c);
+    });
+
+    // Dozens row
+    const dozens = [ ['1st 12','doz-d1', DOZ.d1], ['2nd 12','doz-d2', DOZ.d2], ['3rd 12','doz-d3', DOZ.d3] ];
+    dozens.forEach(([label,key,set],i)=>{
+      const c = makeCell(label, 'outside', key, set);
+      c.style.gridRowStart = '4';
+      c.style.gridColumn = `${2 + i*4} / span 4`;
+      tableEl.appendChild(c);
+    });
+
+    // Bottom outside row: 1-18, Even, Red, Black, Odd, 19-36
+    const outs = [
+      ['1–18','out-low', LOW, 'outside'],
+      ['Even','out-even','even','outside'],
+      ['Red','out-red','red','outside redbtn'],
+      ['Black','out-black','black','outside blackbtn'],
+      ['Odd','out-odd','odd','outside'],
+      ['19–36','out-high', HIGH, 'outside']
+    ];
+    outs.forEach(([label,key,set,cls],i)=>{
+      const c = makeCell(label, cls, key, typeof set==='string'?null:set);
+      c.style.gridRowStart = '5';
+      c.style.gridColumn = `${2 + i*2} / span 2`;
+      tableEl.appendChild(c);
+    });
+  }
+
+  // ====== Chip UI ======
+  function renderChips(){
+    function mount(container){
+      container.innerHTML='';
+      const vals = [...CHIP_VALUES].sort((a,b)=>a-b);
+      vals.forEach(v=>{
+        const b = document.createElement('button');
+        b.className='chip-btn';
+        b.textContent = (v/100).toFixed(2);
+        b.dataset.value=v;
+        if(v===selectedChip) b.classList.add('active');
+        b.addEventListener('click',()=>{ selectedChip=v; document.querySelectorAll('.chip-btn').forEach(x=>x.classList.toggle('active', x===b)); });
+        container.appendChild(b);
+      });
+      const clear = document.createElement('button'); clear.textContent='Clear'; clear.onclick=clearAllBets; container.appendChild(clear);
+    }
+    mount(chipsRow); mount(chipsMobile);
+  }
+
+  // Custom chip add
+  function addCustomChip(){
+    const cents = toCents(chipCustomInput.value);
+    if(!cents || cents<=0){ showToast('Neplatná hodnota žetonu.'); return; }
+    if(!CHIP_VALUES.includes(cents)){
+      CHIP_VALUES.push(cents);
+      CHIP_VALUES = [...new Set(CHIP_VALUES)].filter(n=>Number.isFinite(n) && n>0);
+      CHIP_VALUES.sort((a,b)=>a-b);
+    }
+    selectedChip = cents;
+    chipCustomInput.value='';
+    renderChips();
+  }
+
+  // ====== Bets logic ======
+  function keyToBet(key){
+    if(key.startsWith('straight-')){
+      const n = +key.split('-')[1];
+      return { type:'straight', nums:new Set([n]), payout:35 };
+    }
+    if(key.startsWith('col-')){
+      const ckey = key.split('-')[1];
+      return { type:'column', nums: COL[ckey], payout:2 };
+    }
+    if(key.startsWith('doz-')){
+      const dkey = key.split('-')[1];
+      return { type:'dozen', nums: DOZ[dkey], payout:2 };
+    }
+    if(key.startsWith('out-')){
+      const o = key.split('-')[1];
+      if(o==='red') return { type:'red', nums:'red', payout:1 };
+      if(o==='black') return { type:'black', nums:'black', payout:1 };
+      if(o==='even') return { type:'even', nums:'even', payout:1 };
+      if(o==='odd') return { type:'odd', nums:'odd', payout:1 };
+      if(o==='low') return { type:'low', nums:LOW, payout:1 };
+      if(o==='high') return { type:'high', nums:HIGH, payout:1 };
+    }
+    return null;
+  }
+
+  function placeChip(cell){
+    if(spinning) return;
+    const key = cell.dataset.key;
+    const def = keyToBet(key);
+    if(!def) return;
+    const cost = selectedChip;
+    if(balance < cost) return showToast('Nedostatečný zůstatek.');
+
+    balance -= cost; persistBalance();
+    const cur = bets.get(key) || { ...def, stake:0 };
+    cur.stake += cost; bets.set(key, cur);
+    pushUndo({t:'add', key, amount:cost});
+    renderCellChips(cell, cur.stake);
+    updateBalanceUI();
+  }
+
+  function removeChip(cell){
+    if(spinning) return;
+    const key = cell.dataset.key; const cur = bets.get(key); if(!cur || cur.stake<=0) return;
+    const amount = Math.min(selectedChip, cur.stake);
+    cur.stake -= amount; if(cur.stake===0) bets.delete(key);
+    balance += amount; persistBalance();
+    pushUndo({t:'remove', key, amount});
+    renderCellChips(cell, cur.stake);
+    updateBalanceUI();
+  }
+
+  function renderCellChips(cell, stake){
+    const stack = cell.querySelector('.chipstack');
+    stack.innerHTML='';
+    if(!stake) return;
+    // One visual chip showing the FINAL amount
+    const ch = document.createElement('div');
+    ch.className='chip';
+    ch.textContent = (stake/100).toFixed(2);
+    stack.appendChild(ch);
+  }
+
+  function clearAllBets(){
+    if(spinning) return;
+    if(bets.size===0) return;
+    // refund all
+    let refund=0; for(const [k,b] of bets){ refund+=b.stake; }
+    balance += refund; persistBalance();
+    // For undo stack, add one action capturing snapshot
+    pushUndo({t:'clear', snapshot: snapshotBets(bets)});
+    bets.clear();
+    document.querySelectorAll('.cell').forEach(c=>renderCellChips(c,0));
+    updateBalanceUI();
+  }
+
+  function snapshotBets(src){
+    const arr=[]; for(const [k,b] of src){ arr.push([k,{type:b.type, stake:b.stake}]); }
+    return arr;
+  }
+  function restoreBets(arr){
+    bets.clear();
+    document.querySelectorAll('.cell').forEach(c=>renderCellChips(c,0));
+    for(const [k,bb] of arr){
+      const def = keyToBet(k); if(!def) continue;
+      const full = { ...def, stake:bb.stake };
+      bets.set(k, full);
+      const cell = document.querySelector(`.cell[data-key="${k}"]`);
+      if(cell) renderCellChips(cell, full.stake);
+    }
+  }
+
+  function pushUndo(action){ undoStack.push(action); redoStack.length=0; }
+
+  function undo(){
+    if(spinning || !undoStack.length) return;
+    const a = undoStack.pop();
+    if(a.t==='add'){
+      const b = bets.get(a.key); if(b){ b.stake -= a.amount; if(b.stake<=0) bets.delete(a.key); }
+      balance += a.amount; persistBalance();
+      const cell = document.querySelector(`.cell[data-key="${a.key}"]`); if(cell) renderCellChips(cell, b?b.stake:0);
+      redoStack.push(a);
+    }else if(a.t==='remove'){
+      const def = keyToBet(a.key); const b = bets.get(a.key) || { ...def, stake:0 };
+      b.stake += a.amount; bets.set(a.key,b);
+      balance -= a.amount; persistBalance();
+      const cell = document.querySelector(`.cell[data-key="${a.key}"]`); if(cell) renderCellChips(cell, b.stake);
+      redoStack.push(a);
+    }else if(a.t==='clear'){
+      // restore snapshot
+      restoreBets(a.snapshot);
+      // deduct refund again
+      let cost=0; for(const [k,b] of bets){ cost+=b.stake; }
+      balance -= cost; persistBalance();
+      redoStack.push(a);
+    }
+    updateBalanceUI();
+  }
+
+  function redo(){
+    if(spinning || !redoStack.length) return;
+    const a = redoStack.pop();
+    if(a.t==='add'){
+      // reapply add
+      const def = keyToBet(a.key); const b = bets.get(a.key) || { ...def, stake:0 };
+      b.stake += a.amount; bets.set(a.key,b);
+      balance -= a.amount; persistBalance();
+      const cell = document.querySelector(`.cell[data-key="${a.key}"]`); if(cell) renderCellChips(cell, b.stake);
+      undoStack.push(a);
+    }else if(a.t==='remove'){
+      const b = bets.get(a.key); if(b){ b.stake -= a.amount; if(b.stake<=0) bets.delete(a.key); }
+      balance += a.amount; persistBalance();
+      const cell = document.querySelector(`.cell[data-key="${a.key}"]`); if(cell) renderCellChips(cell, b?b.stake:0);
+      undoStack.push(a);
+    }else if(a.t==='clear'){
+      // reapply clear: refund again then clear
+      let refund=0; for(const [k,b] of bets){ refund+=b.stake; }
+      balance += refund; persistBalance();
+      bets.clear(); document.querySelectorAll('.cell').forEach(c=>renderCellChips(c,0));
+      undoStack.push(a);
+    }
+    updateBalanceUI();
+  }
+
+  function repeatBets(){
+    if(spinning) return;
+    if(!lastRoundSnapshot || !lastRoundSnapshot.length) return showToast('Žádné předchozí sázky.');
+    // compute total cost
+    let total=0; lastRoundSnapshot.forEach(([k,b])=> total+=b.stake);
+    if(balance<total) return showToast('Nedostatečný zůstatek pro Repeat.');
+    balance-=total; persistBalance();
+    restoreBets(lastRoundSnapshot);
+    updateBalanceUI();
+  }
+
+  function doubleBets(){
+    if(spinning) return;
+    let total=0; for(const [k,b] of bets){ total+=b.stake; }
+    if(total===0) return showToast('Nejsou žádné sázky k zdvojnásobení.');
+    if(balance<total) return showToast('Nedostatečný zůstatek pro Double.');
+    balance-=total; persistBalance();
+    for(const [k,b] of bets){ b.stake*=2; const cell = document.querySelector(`.cell[data-key="${k}"]`); if(cell) renderCellChips(cell,b.stake); }
+    updateBalanceUI();
+  }
+
+  // ====== Provably fair ======
+  async function sha256hex(str){
+    const enc = new TextEncoder();
+    const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function hmac256hex(keyStr, msgStr){
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', enc.encode(keyStr), {name:'HMAC', hash:'SHA-256'}, false, ['sign']);
+    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(msgStr));
+    return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function pfResultIndex(){
+    const cseed = clientSeed || '';
+    const msg = `${cseed}:${nonce}`;
+    const h = await hmac256hex(serverSeed, msg);
+    const x = parseInt(h.slice(0,8),16); // 32-bit chunk
+    return x % 37;
+  }
+  async function updateSeedHash(){
+    seedHashEl.textContent = (await sha256hex(serverSeed)).slice(0,16) + '…';
+  }
+
+  // ====== Wheel animation ======
+  let wheelAngle = 0; // radians, 0 at -Y (SVG top), increases CW
+  const BALL_R = 165; // ball radial position (near outer edge of pockets)
+  const LABEL_R = 145;
+
+  function setBallPos(rel){ // rel: relative angle from pointer; 0 = at pointer
+    const x = BALL_R*Math.cos(rel - Math.PI/2); const y = BALL_R*Math.sin(rel - Math.PI/2);
+    const ball = document.getElementById('ball'); ball.setAttribute('cx', x.toFixed(2)); ball.setAttribute('cy', y.toFixed(2));
+  }
+  function updateLabelsPositions(r=LABEL_R){
+    for(const {el, midA} of labelMeta){
+      const a = midA + wheelAngle; // rotate position with wheel, keep text upright
+      const x = r*Math.cos(a); const y = r*Math.sin(a);
+      el.setAttribute('x', x.toFixed(2)); el.setAttribute('y', (y+4).toFixed(2));
+    }
+  }
+
+  function pocketAngle(index){
+    const n = WHEEL.length; const frac = (index + 0.5)/n; // center of pocket
+    return frac*2*Math.PI - Math.PI/2; // 0 rad = top (pointer)
+  }
+
+  function findPocketIndexByNumber(n){ return WHEEL.indexOf(n); }
+
+  function animateSpinTo(resultNumber){
+    return new Promise(resolve=>{
+      const resultIndex = findPocketIndexByNumber(resultNumber);
+      const targetAngle = pocketAngle(resultIndex);
+      const start = performance.now();
+      const duration = 3400 + Math.random()*300; // 3.4–3.7s
+      const startAngleWheel = wheelAngle;
+      const revolutions = 4 + Math.random()*1.2; // 4–5.2 turns
+      // Align target pocket to pointer by adding delta from current angle modulo 2π
+      const twoPi = 2*Math.PI;
+      const deltaToTarget = ((-(targetAngle + Math.PI/2) - (startAngleWheel % twoPi)) + twoPi) % twoPi; // align pocket center to TOP pointer (-π/2)
+      const endAngleWheel = startAngleWheel + revolutions*twoPi + deltaToTarget;
+
+      const relStart = 6*Math.PI; // ball makes ~3 fast laps relative to wheel
+      const relEnd = 0;           // ends at pointer
+
+      function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+      function easeOutQuad(t){ return 1 - (1-t)*(1-t); }
+
+      function frame(now){
+        const t = Math.min(1, (now-start)/duration);
+        const e = easeOutCubic(t);
+        wheelAngle = startAngleWheel + (endAngleWheel - startAngleWheel)*e;
+        const rel = relStart + (relEnd - relStart)*easeOutQuad(t);
+        // Apply transforms
+        const deg = wheelAngle * 180/Math.PI;
+        wheelGroup.setAttribute('transform', `rotate(${deg})`);
+        pocketsGroup.setAttribute('transform', `rotate(${deg})`);
+        updateLabelsPositions();
+        setBallPos(rel);
+        if(t<1){ requestAnimationFrame(frame); }
+        else { setBallPos(0); resolve(); }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  // Helpers for alignment (deterministic)
+  function indexAtPointer(){
+    const pointer = -Math.PI/2;
+    let bestI = 0, bestD = Infinity;
+    for(let i=0;i<WHEEL.length;i++){
+      const a = pocketAngle(i) + wheelAngle; // absolute angle of pocket center
+      const d = Math.abs(Math.atan2(Math.sin(pointer - a), Math.cos(pointer - a))); // shortest angular distance
+      if(d < bestD){ bestD = d; bestI = i; }
+    }
+    return bestI;
+  }
+
+  // ====== Highlights ======
+  function clearHighlights(){
+    document.querySelectorAll('.cell.win,.cell.rowglow,.cell.colglow').forEach(el=>{
+      el.classList.remove('win','rowglow','colglow');
+    });
+  }
+  function highlightResult(num){
+    clearHighlights();
+    // Straight hit
+    const straight = document.querySelector(`.cell[data-key="straight-${num}"]`);
+    (straight || document.querySelector('.cell.zero'))?.classList.add('win');
+    if(num===0){ return; }
+
+    // Row glow: compute the row where the number sits
+    const rowTop   = Array.from({length:12}, (_,i)=>3*(i+1));     // 3,6,...,36  (mod 3 == 0)
+    const rowMid   = Array.from({length:12}, (_,i)=>3*(i+1)-1);   // 2,5,...,35  (mod 3 == 2)
+    const rowBot   = Array.from({length:12}, (_,i)=>3*(i+1)-2);   // 1,4,...,34  (mod 3 == 1)
+    const rowNums  = (num%3===0) ? rowTop : (num%3===2 ? rowMid : rowBot);
+    rowNums.forEach(n=>{
+      const c = document.querySelector(`.cell[data-key="straight-${n}"]`);
+      if(c) c.classList.add('rowglow');
+    });
+
+    // Column highlight (numbers in the same column + the "2 to 1" cell)
+    const colKey = COL.c1.has(num)?'c1':(COL.c2.has(num)?'c2':'c3');
+    const colSet = COL[colKey];
+    colSet.forEach(n=>{
+      const c = document.querySelector(`.cell[data-key="straight-${n}"]`);
+      if(c) c.classList.add('colglow');
+    });
+    const colCell = document.querySelector(`.cell[data-key="col-${colKey}"]`);
+    if(colCell) colCell.classList.add('win','colglow');
+
+    // Dozen
+    const dozKey = DOZ.d1.has(num)?'doz-d1':(DOZ.d2.has(num)?'doz-d2':'doz-d3');
+    document.querySelector(`.cell[data-key="${dozKey}"]`)?.classList.add('win');
+
+    // Outside bets
+    document.querySelector(`.cell[data-key="${RED.has(num)?'out-red':'out-black'}"]`)?.classList.add('win');
+    document.querySelector(`.cell[data-key="${(num%2===0)?'out-even':'out-odd'}"]`)?.classList.add('win');
+    document.querySelector(`.cell[data-key="${LOW.has(num)?'out-low':'out-high'}"]`)?.classList.add('win');
+  }
+
+  // ====== Spin flow ======
+  async function doSpin(){
+    if(spinning) return; if(bets.size===0) return showToast('Nejdřív něco vsadit.');
+    spinning = true; lockUI(true);
+    clearHighlights();
+
+    // Save snapshot (for Repeat)
+    lastRoundSnapshot = snapshotBets(bets);
+
+    // Draw result
+    let resultIndex;
+    if(pfEnable.checked){
+      clientSeed = clientSeedInput.value || clientSeed || '';
+      localStorage.setItem(STORAGE_KEYS.client, clientSeed);
+      resultIndex = await pfResultIndex();
+    }else{
+      const u = new Uint32Array(1); crypto.getRandomValues(u); resultIndex = u[0] % 37;
+    }
+    const resultNumber = WHEEL[resultIndex];
+
+    // Animate — final frame already lands under the pointer; no post-snap to avoid any jump
+    await animateSpinTo(resultNumber);
+
+    // Determine what pocket is actually under the pointer (visual truth)
+    const finalIdx = indexAtPointer();
+    const finalNumber = WHEEL[finalIdx];
+
+    // Highlight table
+    highlightResult(finalNumber);
+
+    // Settle
+    const {win, lose, net} = settleBets(finalNumber);
+    if(net>=0) showToast(`Výsledek: ${finalNumber} ${RED.has(finalNumber)?'(Red)':'(Black/Green)'} · Výhra ${fmt(win)} (net ${fmt(net)})`);
+    else showToast(`Výsledek: ${finalNumber} ${RED.has(finalNumber)?'(Red)':'(Black/Green)'} · Prohra ${fmt(-net)}`);
+
+    if(pfEnable.checked){ nonce++; localStorage.setItem(STORAGE_KEYS.nonce, String(nonce)); nonceEl.textContent = String(nonce); }
+
+    spinning = false; lockUI(false);
+    addHistoryItem(finalNumber, win, lose, net);
+  }
+
+  function settleBets(result){
+    let win=0, lose=0;
+    for(const [k,b] of bets){
+      let hit=false;
+      if(b.type==='straight') hit = b.nums.has(result);
+      else if(b.type==='column') hit = b.nums.has(result);
+      else if(b.type==='dozen') hit = b.nums.has(result);
+      else if(b.type==='red') hit = RED.has(result);
+      else if(b.type==='black') hit = (result!==0 && !RED.has(result));
+      else if(b.type==='even') hit = (result!==0 && result%2===0);
+      else if(b.type==='odd') hit = (result%2===1);
+      else if(b.type==='low') hit = b.nums.has(result);
+      else if(b.type==='high') hit = b.nums.has(result);
+      if(hit){
+        const payoutMult = b.payout + 1; // includes returned stake
+        const amount = b.stake * payoutMult; win += amount; balance += amount; }
+      else { lose += b.stake; }
+    }
+    persistBalance(); updateBalanceUI();
+    return {win, lose, net: win - lose};
+  }
+
+  function addHistoryItem(num, win, lose, net){
+    const item = document.createElement('div'); item.className='hist-item';
+    const dot = document.createElement('div'); dot.className='ball'; item.appendChild(dot);
+    const strong = document.createElement('strong'); strong.textContent = String(num); strong.style.minWidth='26px'; item.appendChild(strong);
+    const color = num===0?'#0f6b3e': (RED.has(num)?'#b31b34':'#0f1522');
+    strong.style.color = color=== '#0f6b3e' ? '#7df3b7' : (color==='#b31b34'?'#ff9db0':'#d9e7ff');
+    const info = document.createElement('span'); info.style.flex='1'; info.style.color='var(--muted)';
+    info.textContent = `Win ${fmt(win)} · Loss ${fmt(lose)} · Net ${fmt(net)}`; item.appendChild(info);
+    const badge = document.createElement('span'); badge.className='badge'; badge.textContent = RED.has(num)?'RED':(num===0?'ZERO':'BLACK'); item.appendChild(badge);
+    histEl.prepend(item);
+  }
+
+  // ====== UI helpers ======
+  function updateBalanceUI(){ balanceInput.value = fmt(balance); }
+  function persistBalance(){ wallet.set(balance); }
+  function showToast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); clearTimeout(showToast._t); showToast._t=setTimeout(()=>toastEl.classList.remove('show'), 2600); }
+  function lockUI(state){ btnSpin.disabled=state; mSpin.disabled=state; document.querySelectorAll('.cell').forEach(c=>c.disabled=state); }
+
+  // ====== Seeds controls ======
+  function newServerSeed(){ serverSeed = crypto.getRandomValues(new Uint32Array(4)).join('-'); localStorage.setItem(STORAGE_KEYS.seed, serverSeed); nonce=0; localStorage.setItem(STORAGE_KEYS.nonce,'0'); nonceEl.textContent='0'; updateSeedHash(); showToast('Vygenerován nový server seed.'); }
+
+  // ====== Events ======
+  btnSpin.addEventListener('click', doSpin); mSpin.addEventListener('click', doSpin);
+  btnUndo.addEventListener('click', undo); mUndo.addEventListener('click', undo);
+  btnRedo.addEventListener('click', redo); mRedo.addEventListener('click', redo);
+  btnRepeat.addEventListener('click', repeatBets); mRepeat.addEventListener('click', repeatBets);
+  btnDouble.addEventListener('click', doubleBets); mDouble.addEventListener('click', doubleBets);
+  newSeedBtn.addEventListener('click', newServerSeed);
+  chipAddBtn.addEventListener('click', addCustomChip);
+  chipCustomInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ addCustomChip(); }});
+  mClear.addEventListener('click', clearAllBets);
+  lobbyBtn.addEventListener('click', ()=>{ window.location.href = '/'; });
+
+  balanceInput.addEventListener('change', ()=>{ const c=toCents(balanceInput.value); if(!isNaN(c)){ wallet.set(c); }});
+  balanceReset.addEventListener('click', ()=>{ wallet.reset(); });
+  clientSeedInput.addEventListener('change', ()=>{ clientSeed=clientSeedInput.value; localStorage.setItem(STORAGE_KEYS.client, clientSeed); });
+  wallet.onChange(b=>{ balance = b; updateBalanceUI(); });
+
+  // ====== Init ======
+  renderWheel();
+  renderTable();
+  renderChips();
+  updateBalanceUI();
+  updateSeedHash();
+  nonceEl.textContent = String(nonce);
+  clientSeedInput.value = clientSeed;
+  setBallPos(0); // initial ball under pointer
+
+  // ====== Lightweight self-tests (no side effects to balance) ======
+  (function selfTests(){
+    try{
+      console.assert(WHEEL.length===37, 'WHEEL should have 37 pockets');
+      console.assert(COL.c1.size===12 && COL.c2.size===12 && COL.c3.size===12, 'Each column should have 12 numbers');
+      console.assert(DOZ.d1.size===12 && DOZ.d2.size===12 && DOZ.d3.size===12, 'Each dozen should have 12 numbers');
+      console.assert(typeof pocketAngle(0)==='number', 'pocketAngle returns number');
+      console.assert(RED.has(1) && !RED.has(2), 'RED set looks valid');
+      // Zero bet mapping
+      const z = keyToBet('straight-0');
+      console.assert(z && z.type==='straight' && z.nums.has(0) && z.payout===35, 'Zero bet = straight 0 (35:1)');
+      // Mapping WHEEL <-> index
+      for(let i=0;i<WHEEL.length;i++){ console.assert(findPocketIndexByNumber(WHEEL[i])===i, 'Index mapping'); }
+      // DOM counts
+      const cellCount = document.querySelectorAll('#table .cell').length; console.assert(cellCount===49, '49 table cells');
+      console.assert(document.getElementById('labels').childElementCount===37, '37 labels');
+      console.assert(document.getElementById('pockets').childElementCount===37, '37 pockets');
+    }catch(e){ console.error('Self-test failed', e); }
+  })();
+</script>
+</body>
+</html>
