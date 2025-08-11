@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mines – Full Local Simulator (v3)</title>
+<style>
+  :root{ --bg-0:#0b0f14; --bg-1:#121a22; --edge:#1b2a36; --accent:#3cd17f; --accent-2:#4ec3ff; --warn:#f5b047; --danger:#ff4d4d; --text:#e7f1fb; --muted:#97a6b5 }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; color:var(--text); background: radial-gradient(1200px 800px at 10% -10%, #152235 0%, transparent 50%), radial-gradient(1000px 700px at 120% 10%, #0f1a28 0%, transparent 50%), var(--bg-0)}
+  .wrap{max-width:1400px; margin:0 auto; padding:16px; display:grid; grid-template-columns:300px 1fr 340px; gap:16px}
+  @media(max-width:1100px){ .wrap{grid-template-columns:1fr} .right{order:3} .gridcard{order:2} .left{order:1}}
+
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02)); border:1px solid var(--edge); border-radius:16px; padding:14px; box-shadow:0 8px 20px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04); backdrop-filter: blur(6px)}
+  .row{display:flex; gap:10px; align-items:center}
+  .space{justify-content:space-between}
+  .muted{color:var(--muted)} .small{font-size:12px} .h{font-weight:800}
+  .balance{font-size:28px; font-weight:900}
+  .chip{border:1px solid var(--edge); background:rgba(255,255,255,.05); border-radius:999px; padding:6px 10px; cursor:pointer; user-select:none}
+  input[type=number],select,input[type=text]{width:100%; background:#0f1620; border:1px solid var(--edge); color:var(--text); padding:10px 12px; border-radius:10px; outline:none; font-size:14px; transition:border-color .15s, box-shadow .15s}
+  input[type=number]:focus,select:focus,input[type=text]:focus{border-color:var(--accent-2); box-shadow:0 0 0 4px rgba(78,195,255,.15)}
+  .btn{appearance:none; width:100%; border:0; border-radius:12px; padding:12px 14px; font-weight:800; letter-spacing:.4px; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,.35)}
+  .btn.secondary{ background:linear-gradient(180deg,#66d1ff,#2a9bd6); color:#08141b }
+  .btn:disabled{opacity:.55; cursor:not-allowed}
+
+  .grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px }
+  .tile{ position:relative; height:0; padding-bottom:100%; perspective:900px }
+  .tile .inner{ position:absolute; inset:0; border-radius:14px; transform-style:preserve-3d; transition:transform .2s ease-out, box-shadow .2s; box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 18px rgba(0,0,0,.35) }
+  .front, .back{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; border-radius:14px; backface-visibility:hidden }
+  .front{ background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02)); border:1px solid var(--edge) }
+  .front::after{ content:""; position:absolute; inset:-2px; border-radius:16px; box-shadow:0 0 0 0 rgba(78,195,255,0); transition: box-shadow .2s }
+  .tile:hover .front::after{ box-shadow:0 0 0 3px rgba(78,195,255,.25) }
+  .back{ transform:rotateY(180deg); border:1px solid var(--edge); background:#0f1923 }
+  .reveal .inner{ transform:rotateY(180deg) }
+  .safe .back{ background: radial-gradient(180px 120px at 50% 10%, rgba(60,209,127,.15), transparent 60%), #0f1923 }
+  .mine .back{ background: radial-gradient(180px 120px at 50% 10%, rgba(255,77,77,.18), transparent 60%), #0f1923 }
+  .svg{ width:44%; height:44% }
+  .gem{ filter: drop-shadow(0 6px 12px rgba(60,209,127,.35)) }
+  .bomb{ filter: drop-shadow(0 6px 12px rgba(255,77,77,.4)) }
+
+  .tile .back .content{ display:flex; align-items:center; justify-content:center; width:100%; height:100% }
+
+  .badge{ position:absolute; top:6px; right:6px; background:rgba(78,195,255,.15); border:1px solid var(--accent-2); color:#e7f6ff; font-size:11px; font-weight:800; padding:2px 6px; border-radius:8px; pointer-events:none; animation:popfade 900ms ease forwards; transform-origin: top right }
+  @keyframes popfade{ 0%{opacity:0; transform:translateY(-4px) scale(.9)} 20%{opacity:1; transform:translateY(0) scale(1)} 100%{opacity:0; transform:translateY(-8px) scale(1)} }
+
+  .tag{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; border:1px solid var(--edge); background:rgba(255,255,255,.04); font-size:12px }
+  .list{ display:flex; flex-direction:column; gap:10px; max-height:520px; overflow:auto; padding-right:4px }
+  .item{ display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; padding:10px; border:1px solid var(--edge); border-radius:12px; background:rgba(255,255,255,.03) }
+  .stats{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px }
+  .stat{ border:1px solid var(--edge); border-radius:12px; padding:10px; background:rgba(255,255,255,.03) }
+  .stat .v{ font-size:18px; font-weight:800 }
+  .switch{ display:inline-flex; align-items:center; gap:8px; cursor:pointer }
+  .switch input{ display:none }
+  .switch .dot{ width:34px; height:20px; border-radius:999px; background:#0f1620; border:1px solid var(--edge); position:relative }
+  .switch .dot::after{ content:""; position:absolute; top:50%; left:2px; width:16px; height:16px; border-radius:50%; transform:translateY(-50%); background:#8598a8; transition:left .2s, background .2s }
+  .switch input:checked + .dot{ background:#193a2a }
+  .switch input:checked + .dot::after{ left:16px; background:#3cd17f }
+  .disclaimer{ font-size:12px; color:var(--muted); border-left:3px solid var(--warn); padding-left:10px }
+
+  .backbtn{ position:fixed; top:14px; left:14px; z-index:50; padding:8px 12px; border-radius:10px;
+    border:1px solid #1b2a36; background:rgba(255,255,255,.06); color:#e7f1fb; text-decoration:none;
+    box-shadow:0 8px 18px rgba(0,0,0,.35); backdrop-filter: blur(6px); }
+  .backbtn:hover{ background:rgba(255,255,255,.1) }
+
+  /* --- Unified Lobby button --- */
+  .lobby-row{ margin-bottom:8px }
+  .lobby-btn{ display:inline-flex; align-items:center; gap:6px; width:auto !important; min-width:0; padding:10px 12px }
+
+  /* Unified Lobby button (self-contained) */
+  .lobby-row{ margin-bottom:8px }
+  .lobby-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:10px 12px;
+    border:1px solid var(--edge);
+    border-radius:12px;
+    background:transparent;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:600;
+    cursor:pointer;
+    width:auto; min-width:0;
+  }
+  .lobby-btn:hover{ background:rgba(255,255,255,.04) }
+
+</style>
+</head>
+<body><div class="wrap">
+  <!-- Left -->
+  <section class="left card"><div class="lobby-row"><a class="lobby-btn" href="../../index.html">← Lobby</a></div><div class="row" style="margin-bottom:8px"></div><div class="row space">
+      <div>
+        <div class="small muted">Balance</div>
+        <div id="balance" class="balance">1,000.00</div>
+      </div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+      </div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="row" style="gap:12px">
+      <div style="flex:1">
+        <div class="small muted">Bet Amount</div>
+        <input id="bet" type="number" min="0.01" step="0.01" value="1.00" />
+      </div>
+      <div style="width:130px">
+        <div class="small muted">Mines</div>
+        <select id="mines"></select>
+      </div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="row space">
+      <div class="tag">Potential: <strong id="potential">0.00</strong></div>
+      <label class="switch"><input id="mute" type="checkbox" /><span class="dot"></span><span class="small muted">Mute</span></label>
+    </div>
+    <div style="height:12px"></div>
+    <div class="disclaimer">This is a local simulator. Balance is fictional. No real money or gambling involved.</div>
+  </section>
+
+  <!-- Grid -->
+  <section class="gridcard card">
+    <div class="row space" style="margin-bottom:10px">
+      <div class="h">Mines Grid <span class="small muted">(5×5)</span></div>
+      <div class="row" style="gap:8px">
+        <span class="tag">Revealed: <strong id="revealed">0</strong></span>
+        <span class="tag">Multiplier: <strong id="mult">1.00×</strong></span>
+      </div>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div class="card" style="margin-top:10px; padding:12px">
+      <div class="row space">
+        <div class="small muted">Amount<br><strong id="amountOut">€1.00</strong></div>
+        <div class="small muted">Multiplier<br><strong id="multOut">1.00×</strong></div>
+        <div class="small muted">Payout<br><strong id="payoutOut">€1.00</strong></div>
+        <div style="width:180px"><button id="cashout" class="btn secondary" disabled>Cash Out (C)</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Right -->
+  <section class="right card">
+    <div class="h">Recent Games</div>
+    <div id="history" class="list" style="margin-top:8px"></div>
+    <div style="height:12px"></div>
+    <div class="h">Stats</div>
+    <div class="stats" style="margin-top:8px">
+      <div class="stat"><div class="small muted">Total games</div><div id="stTotal" class="v">0</div></div>
+      <div class="stat"><div class="small muted">Win rate</div><div id="stWin" class="v">0%</div></div>
+      <div class="stat"><div class="small muted">Highest mult</div><div id="stHighMult" class="v">1.00×</div></div>
+      <div class="stat"><div class="small muted">Highest cashout</div><div id="stHighCash" class="v">0.00</div></div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="h">Shortcuts</div>
+    <div class="row" style="gap:8px; flex-wrap:wrap; margin-top:8px"><span class="tag">C</span><span class="tag">1–5 bets</span></div>
+  </section>
+</div>
+
+<!-- Inline SVG -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="gem" viewBox="0 0 64 64">
+    <path fill="#3cd17f" d="M8 24l8-12h32l8 12-24 32z"/>
+    <path fill="#7af0ae" d="M16 12l16 44L8 24z" opacity=".6"/>
+    <path fill="#1f8b57" d="M40 12l16 12L32 56z" opacity=".5"/>
+    <path fill="#aef7cd" d="M24 12h16l4 12H20z" opacity=".8"/>
+  </symbol>
+  <symbol id="bomb" viewBox="0 0 64 64">
+    <circle cx="30" cy="38" r="18" fill="#2b2f38" stroke="#ff4d4d" stroke-width="3"/>
+    <path d="M40 20c4-8 10-10 18-8" stroke="#ff4d4d" stroke-width="3" fill="none"/>
+    <circle cx="56" cy="12" r="3" fill="#ff4d4d"/>
+    <path d="M20 42l8-4m8 8l-8-4" stroke="#ff8080" stroke-width="3"/>
+  </symbol>
+</svg>
+
+<script>
+// -------- DOM helpers & storage --------
+const $ = q => document.querySelector(q); const $$ = q => Array.from(document.querySelectorAll(q));
+const store = { get:k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch{ return null}}, set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)) };
+const fmt = new Intl.NumberFormat(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtMult = x => (x||1).toFixed(2)+'×';
+function tweenText(el, from, to, ms=300){ const t0=performance.now(); const step=ts=>{const p=Math.min(1,(ts-t0)/ms); const v=from+(to-from)*(1-Math.pow(1-p,3)); el.textContent=fmt.format(v); if(p<1) requestAnimationFrame(step)}; requestAnimationFrame(step)}
+
+// -------- Shared wallet sync --------
+const WALLET_KEY='wallet.balance';
+function walletGet(){ try{ return Number(JSON.parse(localStorage.getItem(WALLET_KEY))||1000) }catch{ return 1000 } }
+function walletSet(v){ localStorage.setItem(WALLET_KEY, JSON.stringify(Math.max(0, Number(v)||0))); }
+
+// -------- Audio (WebAudio) --------
+const AudioFX = (()=>{ const AC = new (window.AudioContext||window.webkitAudioContext)(); let mute=false; function blip({f=880,d=0.12,t='sine',g=0.06}){ if(mute) return; const o=AC.createOscillator(), gn=AC.createGain(); o.type=t; o.frequency.value=f; gn.gain.value=g; o.connect(gn).connect(AC.destination); const now=AC.currentTime; gn.gain.setValueAtTime(0,now); gn.gain.linearRampToValueAtTime(g, now+0.01); gn.gain.exponentialRampToValueAtTime(0.0001, now+d); o.start(); o.stop(now+d); } return { ping:()=>blip({f:1100,t:'triangle'}), boom:()=>{blip({f:90,d:.35,t:'sawtooth',g:.12}); blip({f:50,d:.45,t:'sine',g:.1});}, cash:()=>{blip({f:800,t:'square',d:.08}); setTimeout(()=>blip({f:1200,t:'triangle',d:.12}),70)}, setMute:v=>mute=v }; })();
+
+// -------- Crypto helpers (PF, internal only) --------
+async function sha256Hex(data){ const bytes = data instanceof Uint8Array ? data : new TextEncoder().encode(data); const h=await crypto.subtle.digest('SHA-256',bytes); return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('') }
+async function hmacHex(keyStr,msg){ const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(keyStr),{name:'HMAC',hash:'SHA-256'},false,['sign']); const sig=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(msg)); return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('') }
+function hexInts(hex, bits=16){ const out=[], step=Math.floor(bits/4); for(let i=0;i+step<=hex.length;i+=step) out.push(parseInt(hex.slice(i,i+step),16)); return out }
+async function fairMines(M, client, server, nonce){ const N=25, mines=new Set(); let k=0; while(mines.size<M){ const hex=await hmacHex(server, `${client}|${nonce}|${k++}`); for(const v of hexInts(hex,16)){ const pos=v%N; if(!mines.has(pos)) mines.add(pos); if(mines.size===M) break; } } return mines }
+
+// -------- Game state --------
+const state = { balance:1000, bet:1, mines:3, inRound:false, mineSet:new Set(), revealed:new Set(), nonce:0, clientSeed:'', serverSeed:'', serverHash:'', edge:0, history:[], stats:{total:0,wins:0,highMult:1,highCash:0} };
+
+function load(){ const s=store.get('mines_v3'); if(s) Object.assign(state,s); state.balance = walletGet(); if(!Number.isFinite(state.balance)) state.balance=1000; if(!state.clientSeed) state.clientSeed=Math.random().toString(36).slice(2); if(!state.serverSeed) state.serverSeed=crypto.getRandomValues(new Uint32Array(4)).join('-'); if(!Number.isFinite(state.nonce)) state.nonce=0; if(!Array.isArray(state.history)) state.history=[] }
+async function syncHash(){ state.serverHash = await sha256Hex(state.serverSeed) }
+function save(){ walletSet(state.balance); store.set('mines_v3',{ balance:state.balance, bet:state.bet, mines:state.mines, nonce:state.nonce, clientSeed:state.clientSeed, serverSeed:state.serverSeed, serverHash:state.serverHash, edge:state.edge, history:state.history.slice(-100), stats:state.stats }) }
+
+// -------- Multiplier --------
+function baseMult(M,X){ if(X<=0) return 1; let p=1; for(let i=0;i<X;i++){ p *= (25-M-i)/(25-i) } return 1/p }
+function adjMult(M,X,edge){ return baseMult(M,X)*(1-(edge||0)/100) }
+
+// -------- UI build --------
+function buildSel(){ const m=$('#mines'); m.innerHTML=''; for(let i=1;i<=24;i++){ const o=document.createElement('option'); o.value=i; o.textContent=i; m.appendChild(o) } }
+function buildGrid(){ const g=$('#grid'); g.innerHTML=''; for(let i=0;i<25;i++){ const t=document.createElement('div'); t.className='tile'; t.dataset.idx=i; const inner=document.createElement('div'); inner.className='inner'; const f=document.createElement('div'); f.className='front'; const b=document.createElement('div'); b.className='back'; b.innerHTML='<div class="content"></div>'; inner.appendChild(f); inner.appendChild(b); t.appendChild(inner); g.appendChild(t); } }
+function setBackIcon(t, kind){ const c=t.querySelector('.back .content'); if(kind==='safe') c.innerHTML='<svg class="svg gem" viewBox="0 0 64 64"><use href="#gem"></use></svg>'; else if(kind==='mine') c.innerHTML='<svg class="svg bomb" viewBox="0 0 64 64"><use href="#bomb"></use></svg>'; else c.innerHTML='' }
+function showTileBadge(tileEl, text){ const b=document.createElement('div'); b.className='badge'; b.textContent=text; tileEl.appendChild(b); setTimeout(()=>b.remove(), 900) }
+
+// -------- Rendering --------
+function renderBasics(){ $('#balance').textContent = fmt.format(state.balance); $('#bet').value=state.bet.toFixed(2); $('#mines').value=String(state.mines); $('#revealed').textContent=state.revealed.size; const m=adjMult(state.mines,state.revealed.size,state.edge); $('#mult').textContent=fmtMult(m); $('#amountOut').textContent='€'+fmt.format(state.bet); $('#multOut').textContent=fmtMult(m); $('#payoutOut').textContent='€'+fmt.format(state.bet*m); $('#potential').textContent=fmt.format(state.bet*m) }
+function renderHistory(){ const list=$('#history'); list.innerHTML=''; for(const h of state.history){ const it=document.createElement('div'); it.className='item'; const left=document.createElement('div'); left.innerHTML=`<div class="small muted">${new Date(h.t).toLocaleString()}</div><div class="row" style="gap:8px;flex-wrap:wrap"><span class="tag">Bet <strong>${fmt.format(h.bet)}</strong></span><span class="tag">Mines <strong>${h.m}</strong></span><span class="tag">Safe <strong>${h.x}</strong></span></div>`; const right=document.createElement('div'); right.innerHTML = h.r==='💥'? `<span class="tag" style="border-color:#632b2b;background:rgba(255,77,77,.1);color:#ffb3b3">💥 Mine</span>` : `<span class="tag" style="border-color:#214b35;background:rgba(60,209,127,.1);color:#b9f4d5">${h.r}×</span>`; it.appendChild(left); it.appendChild(right); list.prepend(it)} }
+function renderStats(){ $('#stTotal').textContent=state.stats.total; $('#stWin').textContent=(state.stats.total? Math.round(100*state.stats.wins/state.stats.total):0)+'%'; $('#stHighMult').textContent=fmtMult(state.stats.highMult); $('#stHighCash').textContent=fmt.format(state.stats.highCash) }
+function updateBars(){ const m=adjMult(state.mines,state.revealed.size,state.edge); $('#mult').textContent=fmtMult(m); $('#multOut').textContent=fmtMult(m); $('#revealed').textContent=state.revealed.size; const pot=state.bet*m; $('#potential').textContent=fmt.format(pot); $('#payoutOut').textContent='€'+fmt.format(pot); $('#cashout').disabled = !state.inRound || state.revealed.size===0 }
+function lockInputs(lock){ $('#bet').disabled=lock; $('#mines').disabled=lock }
+
+// -------- Round flow --------
+async function firstClickStart(){ state.bet = Math.max(0.01, Math.min(Number($('#bet').value||1), state.balance)); state.mines = Math.min(24, Math.max(1, Number($('#mines').value||3))); if(state.bet<=0 || state.bet>state.balance){ alert('Invalid bet'); return false } $$('.tile').forEach(t=>{ t.classList.remove('reveal','mine','safe'); setBackIcon(t,'') }); state.revealed.clear(); lockInputs(true); updateBars(); await syncHash(); state.mineSet = await fairMines(state.mines, state.clientSeed, state.serverSeed, state.nonce); state.inRound=true; return true }
+function addHistory(rec){ const item={ t:Date.now(), bet:+state.bet.toFixed(2), m:state.mines, x:state.revealed.size, r:rec }; state.history.push(item); if(state.history.length>60) state.history.shift(); renderHistory() }
+function endRound({cash=false}){ $$('.tile').forEach(t=>{ const idx=+t.dataset.idx; const isMine=state.mineSet.has(idx); t.classList.add('reveal'); t.classList.toggle('mine', isMine); t.classList.toggle('safe', !isMine); setBackIcon(t, isMine?'mine':'safe') }); const X=state.revealed.size; const m=adjMult(state.mines,X,state.edge); let delta=0; if(cash){ delta=+(state.bet*m).toFixed(2); state.balance=+(state.balance+delta).toFixed(2); walletSet(state.balance); AudioFX.cash(); state.stats.wins++; if(m>state.stats.highMult) state.stats.highMult=m; if(delta>state.stats.highCash) state.stats.highCash=delta; addHistory(m.toFixed(2)) } else { delta=-state.bet; state.balance=+(state.balance-state.bet).toFixed(2); walletSet(state.balance); AudioFX.boom(); addHistory('💥') } tweenText($('#balance'), Number($('#balance').textContent.replace(/,/g,'')), state.balance); $('#cashout').disabled=true; state.inRound=false; lockInputs(false); state.stats.total++; state.nonce++; save(); renderStats(); }
+async function onTile(idx, el){ if(!state.inRound){ const ok=await firstClickStart(); if(!ok) return } if(state.revealed.has(idx)) return; const isMine=state.mineSet.has(idx); el.classList.add('reveal'); el.classList.toggle('mine', isMine); el.classList.toggle('safe', !isMine); setBackIcon(el, isMine?'mine':'safe'); if(isMine){ endRound({cash:false}) } else { state.revealed.add(idx); AudioFX.ping(); const m=adjMult(state.mines,state.revealed.size,state.edge); showTileBadge(el, fmtMult(m)); updateBars(); const safeTotal = 25 - state.mines; if(state.revealed.size >= safeTotal){ endRound({cash:true}) } else { $('#cashout').disabled=false } } }
+function cashOut(){ if(!state.inRound || state.revealed.size===0) return; endRound({cash:true}) }
+
+// -------- Events --------
+function wire(){ $('#mines').addEventListener('change', e=>{ state.mines=+e.target.value||3; updateBars(); save() }); $('#bet').addEventListener('change', e=>{ state.bet=Math.max(0.01, +e.target.value||1); e.target.value=state.bet.toFixed(2); updateBars(); save() }); $$('.chip').forEach(b=> b.addEventListener('click',()=>{ if(b.id==='reset') state.balance=1000; else state.balance=+(state.balance + Number(b.dataset.bump||0)).toFixed(2); walletSet(state.balance); tweenText($('#balance'), Number($('#balance').textContent.replace(/,/g,'')), state.balance); save() })); $('#grid').addEventListener('click', ev=>{ const t=ev.target.closest('.tile'); if(!t) return; onTile(+t.dataset.idx, t) }); $('#cashout').addEventListener('click', cashOut); $('#mute').addEventListener('change', e=> AudioFX.setMute(e.target.checked)); window.addEventListener('keydown', e=>{ if(e.repeat) return; if(e.key==='c'||e.key==='C') cashOut(); else if(/^[1-5]$/.test(e.key)){ const presets={'1':1,'2':5,'3':10,'4':50,'5':100}; state.bet=Math.min(state.balance, presets[e.key]); $('#bet').value=state.bet.toFixed(2); updateBars(); save() } }); }
+
+// -------- Init --------
+(async function(){ buildSel(); buildGrid(); load(); await syncHash(); renderBasics(); renderHistory(); renderStats(); wire(); save() })();
+</script>
+</body>
+</html>
