@@ -24,7 +24,6 @@
           <span class="amount balance-amount">0.00</span>
         </div>
         <button class="btn secondary wallet-open">Deposit / Withdraw</button>
-        <div class="pill" id="pf-open" style="cursor:pointer">Provably Fair</div>
         <button class="btn ghost">🔔</button>
         <div class="pill"><span class="icon">👤</span><span>Profile</span></div>
       </div>
@@ -38,7 +37,6 @@
         <div class="row" style="flex-wrap:wrap">
           <span class="tag active">Popular</span>
           <span class="tag">New</span>
-          <span class="tag">Provably Fair</span>
           <span class="tag">High volatility</span>
           <span class="tag">Low volatility</span>
         </div>
@@ -171,27 +169,6 @@
             <button class="btn secondary wdr-add" data-v="250">+250</button>
             <button class="btn danger" id="do-withdraw">Withdraw</button>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Provably fair modal -->
-  <div class="modal" id="pf-modal">
-    <div class="overlay"></div>
-    <div class="window">
-      <button class="btn ghost close">✕</button>
-      <h2>Provably Fair</h2>
-      <div class="row" style="gap:16px;flex-wrap:wrap">
-        <div class="card" style="flex:1">
-          <div class="row"><strong>Server seed:</strong> <span id="pf-server"></span></div>
-          <div class="row" style="margin-top:8px"><strong>Client seed:</strong> <span id="pf-client"></span></div>
-          <div class="row" style="margin-top:8px"><strong>Nonce:</strong> <span id="pf-nonce">0</span></div>
-        </div>
-        <div class="card" style="flex:1">
-          <h3>Result Verification</h3>
-          <div class="alert">Each round uses HMAC-SHA256(server, client:nonce:i) → RNG ⟶ result.</div>
-          <p>Results are deterministic for the given inputs.</p>
         </div>
       </div>
     </div>
