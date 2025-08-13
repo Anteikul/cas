@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Casino Hub – Lokální demo</title>
+  <title>Casino Hub – Local Demo</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -14,9 +14,9 @@
         <a class="active">Lobby</a>
         <a href="#">Slots</a>
         <a href="#">Live</a>
-        <a href="#">Minihry</a>
+        <a href="#">Minigames</a>
         <a href="#">Promo</a>
-        <a href="#">Turnaje</a>
+        <a href="#">Tournaments</a>
       </nav>
       <div class="tools">
         <div class="pill wallet-open" style="cursor:pointer">
@@ -26,7 +26,7 @@
         <button class="btn secondary wallet-open">Deposit / Withdraw</button>
         <button class="btn ghost" id="pf-open">Provably Fair</button>
         <button class="btn ghost">🔔</button>
-        <div class="pill"><span class="icon">👤</span><span>Profil</span></div>
+        <div class="pill"><span class="icon">👤</span><span>Profile</span></div>
       </div>
     </div>
   </header>
@@ -34,31 +34,31 @@
   <div class="layout">
     <aside class="sidebar">
       <div class="card">
-        <h3>Rychlé filtry</h3>
+        <h3>Quick Filters</h3>
         <div class="row" style="flex-wrap:wrap">
-          <span class="tag active">Populární</span>
-          <span class="tag">Nové</span>
-          <span class="tag">Provably fair</span>
-          <span class="tag">Vysoká volatilita</span>
-          <span class="tag">Nízká volatilita</span>
+          <span class="tag active">Popular</span>
+          <span class="tag">New</span>
+          <span class="tag">Provably Fair</span>
+          <span class="tag">High volatility</span>
+          <span class="tag">Low volatility</span>
         </div>
       </div>
       <div class="card">
-        <h3>Kolekce</h3>
+        <h3>Collections</h3>
         <div class="row" style="flex-wrap:wrap">
-          <span class="tag">Klasika</span>
-          <span class="tag">Vysoké násobky</span>
-          <span class="tag">Rychlovky</span>
+          <span class="tag">Classics</span>
+          <span class="tag">High multipliers</span>
+          <span class="tag">Quick plays</span>
         </div>
       </div>
     </aside>
 
     <main>
       <div class="container" style="padding-top:0">
-        <h2>Hry</h2>
+        <h2>Games</h2>
         <div class="grid">
           <!-- Tiles -->
-          <a class="tile" href="games/mines/mines.html">
+          <a class="tile playable" href="games/mines/mines.html">
             <div class="badge">Hot</div>
             <div class="thumb">
               <!-- diamond -->
@@ -66,53 +66,61 @@
             </div>
             <div class="meta"><div class="title">Mines</div><div class="cta">Play</div></div>
           </a>
-          <a class="tile" href="games/crash/crash.html">
+          <a class="tile upcoming" href="#">
+            <div class="badge upcoming">Upcoming</div>
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><path d="M10 90 L20 70 L30 75 L50 40 L70 50 L90 10" fill="none" stroke="#27c6e5" stroke-width="3"/></svg></div>
-            <div class="meta"><div class="title">Crash</div><div class="cta">Play</div></div>
+            <div class="meta"><div class="title">Crash</div><div class="cta">Upcoming</div></div>
           </a>
-          <a class="tile" href="games/plinko/plinko.html">
+          <a class="tile playable" href="games/plinko/plinko.html">
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="20" r="6" stroke="#2ee6a6" fill="none"/><circle cx="30" cy="40" r="4" stroke="#fff" fill="none"/><circle cx="70" cy="40" r="4" stroke="#fff" fill="none"/><circle cx="50" cy="60" r="4" stroke="#fff" fill="none"/></svg></div>
             <div class="meta"><div class="title">Plinko</div><div class="cta">Play</div></div>
           </a>
-          <a class="tile" href="games/dice/dice.html">
+          <a class="tile playable" href="games/dice/dice.html">
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" rx="8" stroke="#fff" fill="none"/><circle cx="40" cy="40" r="5" fill="#fff"/><circle cx="60" cy="60" r="5" fill="#fff"/></svg></div>
             <div class="meta"><div class="title">Dice</div><div class="cta">Play</div></div>
           </a>
-          <a class="tile" href="games/limbo/limbo.html">
+          <a class="tile upcoming" href="#">
+            <div class="badge upcoming">Upcoming</div>
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><text x="50" y="60" text-anchor="middle" font-size="36" fill="#2ee6a6">×</text></svg></div>
-            <div class="meta"><div class="title">Limbo</div><div class="cta">Play</div></div>
+            <div class="meta"><div class="title">Limbo</div><div class="cta">Upcoming</div></div>
           </a>
-          <a class="tile" href="games/towers/towers.html">
+          <a class="tile upcoming" href="#">
+            <div class="badge upcoming">Upcoming</div>
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><rect x="40" y="20" width="20" height="60" stroke="#fff" fill="none"/><rect x="35" y="80" width="30" height="8" fill="#fff"/></svg></div>
-            <div class="meta"><div class="title">Towers</div><div class="cta">Play</div></div>
+            <div class="meta"><div class="title">Towers</div><div class="cta">Upcoming</div></div>
           </a>
-          <a class="tile" href="games/keno/keno.html">
+          <a class="tile upcoming" href="#">
+            <div class="badge upcoming">Upcoming</div>
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><circle cx="35" cy="50" r="12" stroke="#fff" fill="none"/><circle cx="65" cy="50" r="12" stroke="#fff" fill="none"/><text x="35" y="55" text-anchor="middle" font-size="10">7</text><text x="65" y="55" text-anchor="middle" font-size="10">21</text></svg></div>
-            <div class="meta"><div class="title">Keno</div><div class="cta">Play</div></div>
+            <div class="meta"><div class="title">Keno</div><div class="cta">Upcoming</div></div>
           </a>
-          <a class="tile" href="games/wheel/wheel.html">
+          <a class="tile upcoming" href="#">
+            <div class="badge upcoming">Upcoming</div>
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" stroke="#fff" fill="none"/><line x1="50" y1="20" x2="50" y2="80" stroke="#fff"/><line x1="20" y1="50" x2="80" y2="50" stroke="#fff"/></svg></div>
-            <div class="meta"><div class="title">Wheel</div><div class="cta">Spin</div></div>
+            <div class="meta"><div class="title">Wheel</div><div class="cta">Upcoming</div></div>
           </a>
-          <a class="tile" href="games/hilo/hilo.html">
+          <a class="tile upcoming" href="#">
+            <div class="badge upcoming">Upcoming</div>
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><path d="M25 70 L50 30 L75 70 Z" stroke="#2ee6a6" fill="none"/></svg></div>
-            <div class="meta"><div class="title">Hi–Lo</div><div class="cta">Play</div></div>
+            <div class="meta"><div class="title">Hi–Lo</div><div class="cta">Upcoming</div></div>
           </a>
-          <a class="tile" href="games/coinflip/coinflip.html">
+          <a class="tile upcoming" href="#">
+            <div class="badge upcoming">Upcoming</div>
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="26" ry="34" stroke="#fff" fill="none"/></svg></div>
-            <div class="meta"><div class="title">Coinflip</div><div class="cta">Flip</div></div>
+            <div class="meta"><div class="title">Coinflip</div><div class="cta">Upcoming</div></div>
           </a>
-          <a class="tile" href="games/roulette/roulette.html">
+          <a class="tile playable" href="games/roulette/roulette.html">
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" stroke="#fff" fill="none"/><circle cx="50" cy="50" r="4" fill="#fff"/></svg></div>
             <div class="meta"><div class="title">Roulette</div><div class="cta">Play</div></div>
           </a>
-          <a class="tile" href="games/blackjack/blackjack.html">
+          <a class="tile playable" href="games/blackjack/blackjack.html">
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><rect x="30" y="20" width="30" height="40" rx="6" stroke="#fff" fill="none"/><rect x="40" y="35" width="30" height="40" rx="6" stroke="#fff" fill="none"/></svg></div>
             <div class="meta"><div class="title">Blackjack</div><div class="cta">Play</div></div>
           </a>
-          <a class="tile" href="games/slots/slots.html">
+          <a class="tile upcoming" href="#">
+            <div class="badge upcoming">Upcoming</div>
             <div class="thumb"><svg width="80" height="80" viewBox="0 0 100 100"><rect x="20" y="25" width="60" height="50" rx="10" stroke="#fff" fill="none"/><text x="50" y="55" font-size="16" text-anchor="middle">777</text></svg></div>
-            <div class="meta"><div class="title">Slots</div><div class="cta">Spin</div></div>
+            <div class="meta"><div class="title">Slots</div><div class="cta">Upcoming</div></div>
           </a>
         </div>
       </div>
@@ -125,14 +133,14 @@
       </div>
       <div class="card">
         <h3>Promo</h3>
-        <div class="alert">Denní úkol: Získej 3× výhru v libovolné hře.</div>
+        <div class="alert">Daily task: Get 3 wins in any game.</div>
       </div>
     </aside>
   </div>
 
   <div class="footer">
-    <div>© Lokální demo. Odpovědné hraní. Podmínky. Nápověda.</div>
-    <div>Jazyk: Čeština • Region: CZ</div>
+    <div>© Local demo. Responsible gaming. Terms. Help.</div>
+    <div>Language: English • Region: CZ</div>
   </div>
 
   <!-- Wallet modal -->
@@ -140,28 +148,28 @@
     <div class="overlay"></div>
     <div class="window">
       <button class="btn ghost close">✕</button>
-      <h2>Peněženka</h2>
+      <h2>Wallet</h2>
       <div class="row" style="gap:16px;align-items:flex-end;flex-wrap:wrap">
         <div class="card" style="flex:1;min-width:260px">
           <h3>Deposit</h3>
-          <label>Částka</label>
+          <label>Amount</label>
           <input id="dep-amount" type="number" min="0" step="1" placeholder="0">
           <div class="quick-adds" style="margin-top:8px">
             <button class="btn secondary dep-add" data-v="10">+10</button>
             <button class="btn secondary dep-add" data-v="50">+50</button>
             <button class="btn secondary dep-add" data-v="250">+250</button>
-            <button class="btn primary" id="do-deposit">Vložit</button>
+            <button class="btn primary" id="do-deposit">Deposit</button>
           </div>
         </div>
         <div class="card" style="flex:1;min-width:260px">
           <h3>Withdraw</h3>
-          <label>Částka</label>
+          <label>Amount</label>
           <input id="wdr-amount" type="number" min="0" step="1" placeholder="0">
           <div class="quick-adds" style="margin-top:8px">
             <button class="btn secondary wdr-add" data-v="10">+10</button>
             <button class="btn secondary wdr-add" data-v="50">+50</button>
             <button class="btn secondary wdr-add" data-v="250">+250</button>
-            <button class="btn danger" id="do-withdraw">Vybrat</button>
+            <button class="btn danger" id="do-withdraw">Withdraw</button>
           </div>
         </div>
       </div>
@@ -181,9 +189,9 @@
           <div class="row" style="margin-top:8px"><strong>Nonce:</strong> <span id="pf-nonce">0</span></div>
         </div>
         <div class="card" style="flex:1">
-          <h3>Verifikace výsledku</h3>
-          <div class="alert">Každé kolo využívá HMAC-SHA256(server, client:nonce:i) → RNG ⟶ výsledek.</div>
-          <p>Výsledky jsou deterministické pro zadané vstupy.</p>
+          <h3>Result Verification</h3>
+          <div class="alert">Each round uses HMAC-SHA256(server, client:nonce:i) → RNG ⟶ result.</div>
+          <p>Results are deterministic for the given inputs.</p>
         </div>
       </div>
     </div>
