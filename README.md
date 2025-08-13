@@ -118,7 +118,8 @@ Released under the **MIT License**. See [`LICENSE`](./LICENSE) for details.
 
 ### 📷 Screenshots
 
-```md
+
 ![Home screen](docs/screenshot-1.png)
-```
+
+
 
