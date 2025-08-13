@@ -58,7 +58,6 @@ nav.main a.active,nav.main a:hover{border-color:var(--border); background:rgba(2
 .btn.primary{background:linear-gradient(135deg,var(--accent),#52f0d0); color:#07110d}
 .btn.secondary{background:rgba(255,255,255,.06); border:1px solid var(--border); color:#d6dee7}
 .btn.ghost{background:transparent;border:1px solid var(--border);}
-#pf-open{color:#fff}
 .btn.danger{background:linear-gradient(135deg,#ff5d5d,#ff7d7d); color:#220707}
 .icon{opacity:.9}
 input,select{
