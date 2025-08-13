@@ -51,7 +51,7 @@
       state="finished";
       $("#play-btn").classList.remove("hidden");
       $("#cashout-btn").classList.add("hidden");
-      pushNotify("Mines: Prohra.");
+      pushNotify("Mines: Loss.");
       // reveal all
       $$(".cell").forEach((b,i)=>{
         if(!b.classList.contains("revealed")){

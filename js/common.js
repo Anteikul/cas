@@ -169,11 +169,11 @@ function bindWallet(){
   }));
   $("#do-deposit")?.addEventListener("click", ()=>{
     const v = Number(depInput.value||0);
-    if(v>0){ Wallet.add(v); pushNotify(`Vklad +${fmt(v)}`); depInput.value=''; }
+    if(v>0){ Wallet.add(v); pushNotify(`Deposit +${fmt(v)}`); depInput.value=''; }
   });
   $("#do-withdraw")?.addEventListener("click", ()=>{
     const v = Number(wdrInput.value||0);
-    if(v>0 && v<=Wallet.get()){ Wallet.sub(v); pushNotify(`Výběr -${fmt(v)}`); wdrInput.value=''; }
+    if(v>0 && v<=Wallet.get()){ Wallet.sub(v); pushNotify(`Withdrawal -${fmt(v)}`); wdrInput.value=''; }
   });
 }
 
@@ -198,8 +198,8 @@ function getBet(){ return Number($("#bet-amount")?.value||0); }
 function setBet(v){ const el=$("#bet-amount"); if(el){ el.value = Math.max(0, Number(v)||0); } }
 function placeBet(){
   const b = getBet();
-  if(b<=0){ alert("Zadej sázku."); return false; }
-  if(Wallet.get()<b){ alert("Nedostatečný zůstatek."); return false; }
+  if(b<=0){ alert("Enter a bet."); return false; }
+  if(Wallet.get()<b){ alert("Insufficient balance."); return false; }
   Wallet.sub(b);
   return true;
 }
@@ -207,7 +207,7 @@ function payout(mult){
   const b = getBet();
   const won = Number((b*mult).toFixed(2));
   if(won>0) Wallet.add(won);
-  pushNotify(`Výhra ${fmt(won)} (${mult.toFixed(2)}×)`);
+  pushNotify(`Win ${fmt(won)} (${mult.toFixed(2)}×)`);
   return won;
 }
 

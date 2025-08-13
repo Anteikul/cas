@@ -226,7 +226,6 @@
         </div>
 
         <div class="row" style="justify-content:center; gap:12px">
-          <button id="pfBtn" class="btn">Provably Fair</button>
           <button id="rollBtn" class="btn primary" style="min-width:240px; font-size:18px; padding:14px 18px">Roll</button>
         </div>
       </div>
@@ -242,35 +241,6 @@
     </div>
   </div>
 
-  <!-- PF dialog -->
-  <dialog id="pfDialog">
-    <div class="modal">
-      <h3>Provably Fair – HMAC-SHA256</h3>
-      <div class="section">
-        <div class="row">
-          <div class="col" style="flex:1">
-            <label class="muted">Server seed (secret hex)</label>
-            <input id="serverSeed" type="text" class="mono" value="">
-          </div>
-          <div class="col" style="flex:1">
-            <label class="muted">Client seed</label>
-            <input id="clientSeed" type="text" class="mono" value="">
-          </div>
-          <div class="col">
-            <label class="muted">Nonce</label>
-            <input id="nonce" type="number" min="0" value="0" style="width:120px">
-          </div>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <button id="randomizeSeeds" class="btn">Randomize</button>
-          <button id="pfClose" class="btn ghost">Close</button>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <div class="muted" style="font-size:12px">Outcome: <span class="mono">roll = (HMAC_SHA256(serverSeed, `${clientSeed}:${nonce}`)[0..3] / 2^32) × 100</span> (0–99.99). Each bet increases the nonce by 1.</div>
-        </div>
-      </div>
-    </div>
-  </dialog>
 
 <script>
 (() => {
@@ -308,9 +278,6 @@
     payoutOut: q('#payoutOut'), chanceOut: q('#chanceOut'), targetOut: q('#targetOut'),
 
     tableMine: q('#tableMine'), history: q('#history'),
-
-    pfBtn: q('#pfBtn'), pfDialog: q('#pfDialog'), pfClose: q('#pfClose'),
-    serverSeed: q('#serverSeed'), clientSeed: q('#clientSeed'), nonce: q('#nonce'), randomizeSeeds: q('#randomizeSeeds'),
   };
 
   // ===== Utils =====
@@ -377,7 +344,6 @@
   el.line.addEventListener('mousedown', e=>{ if(e.target!==el.handle) posToChance(e.clientX); });
   el.line.addEventListener('touchstart', e=>{ if(e.target!==el.handle) posToChance(e.touches[0].clientX); }, {passive:true});
 
-  // ===== Provably fair =====
   async function hmacSha256(keyBytes, msgBytes){
     const key = await crypto.subtle.importKey('raw', keyBytes, {name:'HMAC', hash:'SHA-256'}, false, ['sign']);
     const sig = await crypto.subtle.sign('HMAC', key, msgBytes);
@@ -429,7 +395,7 @@
   function setDisabled(dis){
     el.rollBtn.disabled = dis;
     qa('input,button,select').forEach(x=>{
-      if (x===el.rollBtn || x===el.pfClose) return;
+      if (x===el.rollBtn) return;
       if (dis) x.setAttribute('data-prevdis','1'), x.disabled = true;
       else if (x.hasAttribute('data-prevdis')) { x.disabled=false; x.removeAttribute('data-prevdis'); }
     });
@@ -516,21 +482,9 @@ await new Promise(r=>setTimeout(r, 950));
 
   // Handle drag listeners already above
 
-  // PF dialog
-  el.pfBtn.addEventListener('click', ()=> el.pfDialog.showModal());
-  el.pfClose.addEventListener('click', ()=> el.pfDialog.close());
-  el.randomizeSeeds.addEventListener('click', ()=>{
-    s.serverSeed = randHex(64); s.clientSeed = randHex(32); s.nonce = 0;
-    el.serverSeed.value = s.serverSeed; el.clientSeed.value = s.clientSeed; el.nonce.value = s.nonce;
-  });
-  el.serverSeed.addEventListener('input', ()=> s.serverSeed = el.serverSeed.value.trim());
-  el.clientSeed.addEventListener('input', ()=> s.clientSeed = el.clientSeed.value.trim());
-  el.nonce.addEventListener('input', ()=> s.nonce = Math.max(0, Number(el.nonce.value)||0));
-
   // ===== Init =====
   function initSeeds(){
     s.serverSeed = randHex(64); s.clientSeed = randHex(32); s.nonce = 0;
-    el.serverSeed.value = s.serverSeed; el.clientSeed.value = s.clientSeed; el.nonce.value = s.nonce;
   }
   function init(){
     updateBalanceView();

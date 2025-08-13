@@ -133,10 +133,7 @@
         </svg>
         <div class="pointer" aria-hidden="true"></div>
       </div>
-      <div class="status">
-        <div class="pill">Server seed hash: <span id="seedHash">–</span></div>
-        <div class="pill">Nonce: <span id="nonce">0</span></div>
-      </div>
+      
     </section>
 
     <!-- CENTER: TABLE -->
@@ -160,11 +157,7 @@
         </div>
         <div class="spin-row">
           <button class="spin-btn" id="btn-spin">Spin</button>
-          <label style="display:flex; align-items:center; gap:8px">
-            <input type="checkbox" id="pf-enable" /> Provably‑fair (HMAC)
-          </label>
         </div>
-        <input id="client-seed" placeholder="Client seed (optional)" style="display:none" />
       </div>
     </section>
 
@@ -212,7 +205,6 @@
   const HIGH = new Set(Array.from({length:18},(_,i)=>i+19));
 
   let CHIP_VALUES = [1,5,25,100,500,1000]; // in cents: 0.01–10.00
-  const STORAGE_KEYS = { seed:'roulette_server_seed', nonce:'roulette_nonce', client:'roulette_client_seed' };
   const WALLET_KEY = 'wallet.balance';
   function walletGet(){ try{ return Number(JSON.parse(localStorage.getItem(WALLET_KEY))||1000); }catch{ return 1000 } }
   function walletSet(v){ localStorage.setItem(WALLET_KEY, JSON.stringify(Math.max(0, Number(v)||0))); }
@@ -223,9 +215,6 @@
 
   // State
   let balance = Math.round(walletGet()*100);
-  let serverSeed = localStorage.getItem(STORAGE_KEYS.seed) || crypto.getRandomValues(new Uint32Array(4)).join('-');
-  let clientSeed = localStorage.getItem(STORAGE_KEYS.client) || '';
-  let nonce = parseInt(localStorage.getItem(STORAGE_KEYS.nonce) || '0', 10);
 
   let selectedChip = 100; // 1.00 CZK/EUR whatever
 
@@ -252,10 +241,7 @@
   const mRedo = document.getElementById('m-redo');
   const mRepeat = document.getElementById('m-repeat');
   const mDouble = document.getElementById('m-double');
-  const seedHashEl = document.getElementById('seedHash');
-  const nonceEl = document.getElementById('nonce');
-  const pfEnable = document.getElementById('pf-enable');
-  const clientSeedInput = document.getElementById('client-seed');
+  
   const chipCustomInput = document.getElementById('chip-custom-value');
   const chipAddBtn = document.getElementById('chip-add-btn');
   const mClear = document.getElementById('m-clear');
@@ -603,29 +589,6 @@
     updateBalanceUI();
   }
 
-  // ====== Provably fair ======
-  async function sha256hex(str){
-    const enc = new TextEncoder();
-    const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
-    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
-  }
-  async function hmac256hex(keyStr, msgStr){
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey('raw', enc.encode(keyStr), {name:'HMAC', hash:'SHA-256'}, false, ['sign']);
-    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(msgStr));
-    return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('');
-  }
-  async function pfResultIndex(){
-    const cseed = clientSeed || '';
-    const msg = `${cseed}:${nonce}`;
-    const h = await hmac256hex(serverSeed, msg);
-    const x = parseInt(h.slice(0,8),16); // 32-bit chunk
-    return x % 37;
-  }
-  async function updateSeedHash(){
-    seedHashEl.textContent = (await sha256hex(serverSeed)).slice(0,16) + '…';
-  }
-
   // ====== Wheel animation ======
   let wheelAngle = 0; // radians, 0 at -Y (SVG top), increases CW
   const BALL_R = 165; // ball radial position (near outer edge of pockets)
@@ -752,14 +715,7 @@
     lastRoundSnapshot = snapshotBets(bets);
 
     // Draw result
-    let resultIndex;
-    if(pfEnable.checked){
-      clientSeed = clientSeedInput.value || clientSeed || '';
-      localStorage.setItem(STORAGE_KEYS.client, clientSeed);
-      resultIndex = await pfResultIndex();
-    }else{
-      const u = new Uint32Array(1); crypto.getRandomValues(u); resultIndex = u[0] % 37;
-    }
+    const u = new Uint32Array(1); crypto.getRandomValues(u); const resultIndex = u[0] % 37;
     const resultNumber = WHEEL[resultIndex];
 
     // Animate — final frame already lands under the pointer; no post-snap to avoid any jump
@@ -777,7 +733,6 @@
     if(net>=0) showToast(`Result: ${finalNumber} ${RED.has(finalNumber)?'(Red)':'(Black/Green)'} · Win ${fmt(win)} (net ${fmt(net)})`);
     else showToast(`Result: ${finalNumber} ${RED.has(finalNumber)?'(Red)':'(Black/Green)'} · Loss ${fmt(-net)}`);
 
-    if(pfEnable.checked){ nonce++; localStorage.setItem(STORAGE_KEYS.nonce, String(nonce)); nonceEl.textContent = String(nonce); }
 
     spinning = false; lockUI(false);
     addHistoryItem(finalNumber, win, lose, net);
@@ -823,9 +778,6 @@
   function showToast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); clearTimeout(showToast._t); showToast._t=setTimeout(()=>toastEl.classList.remove('show'), 2600); }
   function lockUI(state){ btnSpin.disabled=state; mSpin.disabled=state; document.querySelectorAll('.cell').forEach(c=>c.disabled=state); }
 
-  // ====== Seeds controls ======
-  function newServerSeed(){ serverSeed = crypto.getRandomValues(new Uint32Array(4)).join('-'); localStorage.setItem(STORAGE_KEYS.seed, serverSeed); nonce=0; localStorage.setItem(STORAGE_KEYS.nonce,'0'); nonceEl.textContent='0'; updateSeedHash(); showToast('New server seed generated.'); }
-
   // ====== Events ======
   btnSpin.addEventListener('click', doSpin); mSpin.addEventListener('click', doSpin);
   btnUndo.addEventListener('click', undo); mUndo.addEventListener('click', undo);
@@ -837,16 +789,11 @@
   mClear.addEventListener('click', clearAllBets);
 
   balanceInput.addEventListener('change', ()=>{ const c=toCents(balanceInput.value); if(!isNaN(c)){ balance=c; persistBalance(); updateBalanceUI(); }});
-  clientSeedInput.addEventListener('change', ()=>{ clientSeed=clientSeedInput.value; localStorage.setItem(STORAGE_KEYS.client, clientSeed); });
-
   // ====== Init ======
   renderWheel();
   renderTable();
   renderChips();
   updateBalanceUI();
-  updateSeedHash();
-  nonceEl.textContent = String(nonce);
-  clientSeedInput.value = clientSeed;
   setBallPos(0); // initial ball under pointer
 
   // ====== Lightweight self-tests (no side effects to balance) ======
