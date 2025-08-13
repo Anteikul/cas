@@ -125,7 +125,7 @@ Released under the **MIT License**. See [`LICENSE`](./LICENSE) for details.
 ![Home screen](docs/screenshot-4.png)
 ![Home screen](docs/screenshot-5.png)
 ![Home screen](docs/screenshot-6.png)
-![Home screen](docs/screenshot-7.png)
+
 
 
 
