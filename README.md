@@ -116,10 +116,9 @@ Released under the **MIT License**. See [`LICENSE`](./LICENSE) for details.
 
 ---
 
-### 📷 (Optional) Screenshots
-
-Create a `docs/` folder and add visuals (e.g., `docs/screenshot-1.png`). Then embed them here:
+### 📷 Screenshots
 
 ```md
 ![Home screen](docs/screenshot-1.png)
 ```
+
