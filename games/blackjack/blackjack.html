@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Blackjack (Mines skin) – Split/Double/S17 – FIX</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#121825; --edge:#1c2940; --muted:#9bb0c9; --text:#e7f1fb;
+    --accent:#5aa7ff; --good:#35d18a; --bad:#ff6b6b; --chip:#172235; --gold:#ffd266;
+    --shadow:0 6px 20px rgba(0,0,0,.35);
+  }
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--text);
+    background:
+      radial-gradient(1300px 700px at 50% -8%, #162238 0%, transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, #0f1a2a 0%, transparent 60%),
+      var(--bg);
+    font:14px/1.42 system-ui, Segoe UI, Roboto, Inter, sans-serif;
+    letter-spacing:.2px;
+  }
+  .wrap{ display:grid; gap:16px; padding:16px; grid-template-columns:320px 1fr 340px; }
+  @media (max-width:1100px){ .wrap{ grid-template-columns:1fr } }
+
+  .panel{
+    background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 30%), var(--panel);
+    border:1px solid var(--edge); border-radius:14px; box-shadow:var(--shadow);
+  }
+  .panel h2{
+    margin:0; padding:12px 14px; font-size:13px; text-transform:uppercase; letter-spacing:.12em;
+    color:var(--muted); border-bottom:1px solid var(--edge);
+  }
+  .controls{ padding:14px; display:grid; gap:12px }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .pill{ padding:8px 12px; border:1px solid var(--edge); border-radius:10px; background:var(--chip) }
+  input[type=number], input[type=text]{
+    background:var(--chip); color:var(--text); border:1px solid var(--edge);
+    border-radius:10px; padding:10px 12px; outline:none; width:100%;
+  }
+  .btn{
+    user-select:none; cursor:pointer; white-space:nowrap;
+    padding:10px 14px; border-radius:12px; border:1px solid var(--edge);
+    background:linear-gradient(180deg, rgba(255,255,255,.06), transparent 50%), #152033;
+    transition:transform .05s ease, filter .2s ease, background .2s ease, opacity .2s;
+    display:inline-flex; align-items:center; justify-content:center; /* proti svislému roztažení */
+  }
+  .btn:hover{ filter:brightness(1.1) }
+  .btn:active{ transform:translateY(1px) }
+  .btn.accent{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--accent); color:#07121f; border-color:#3f83db }
+  .btn.good{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--good); color:#062016; border-color:#1e9f6a }
+  .btn.bad{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--bad); color:#290909; border-color:#d05151 }
+  .btn.ghost{ background:transparent; color:var(--text) }
+  .btn.pill{ color:var(--text) }
+  .btn.split{ background:#ffffff; color:#0b1424; border-color:#e4e9f3 }
+  .btn[disabled]{ opacity:.5; pointer-events:none }
+  .stat{ font-variant-numeric:tabular-nums; }
+  .muted{ color:var(--muted) }
+
+  .table{
+    position:relative; padding:16px; display:grid; gap:16px; min-height:560px;
+    background:
+      radial-gradient(1000px 300px at 50% 0%, rgba(90,167,255,.08), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,.02), transparent 30%),
+      var(--panel);
+    border:1px solid var(--edge); border-radius:16px; box-shadow:var(--shadow);
+  }
+  .felt{
+    position:relative; overflow:hidden; border-radius:14px; border:1px dashed #22314f;
+    background:
+      radial-gradient(700px 250px at 50% 0%, rgba(53,209,138,.07), transparent 60%),
+      radial-gradient(600px 400px at 90% 110%, rgba(255,214,102,.05), transparent 60%),
+      #0f1726;
+    padding:18px;
+  }
+  .labels{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px }
+  .zone{ padding:18px 0 }
+  .zone+.zone{ border-top:1px dashed #22314f }
+
+  /* Dealer: skóre nad kartami (absolute) */
+  .hand.dealer{ position:relative; padding:20px 0 }
+  .hand.dealer .score{
+    position:absolute; left:50%; transform:translateX(-50%); top:-12px;
+    background:var(--chip); border:1px solid var(--edge); border-radius:10px; padding:6px 10px; font-weight:600;
+  }
+
+  /* Hráč: karty vedle sebe, skóre POD kartami – statické */
+  .player-hands{ display:grid; gap:16px }
+  .hand.player{ position:relative; padding:12px 0 }
+  .hand.player .score{
+    position:static; display:block; margin-top:8px; text-align:center;
+    background:var(--chip); border:1px solid var(--edge); border-radius:10px; padding:6px 10px; font-weight:600;
+    width:max-content; margin-left:auto; margin-right:auto;
+  }
+  .hand.player.active{ outline:2px solid var(--accent); outline-offset:6px; border-radius:12px; padding-bottom:18px }
+  .hand.player .bettag{
+    position:absolute; left:50%; transform:translateX(-50%); top:-26px;
+    background:#0f1a2a; border:1px solid var(--edge); border-radius:999px; padding:2px 8px; font-size:12px;
+  }
+
+  .cards{ display:flex; justify-content:center; gap:10px }
+
+  .card{
+    width:78px; height:114px; border-radius:10px; background:#e6ebf3;
+    box-shadow:0 8px 20px rgba(0,0,0,.35); border:1px solid rgba(0,0,0,.15);
+    position:relative; transform:translateX(-80px); opacity:0; animation:flyin .6s ease forwards; /* pomalejší */
+  }
+  @keyframes flyin{ to{ transform:translateX(0); opacity:1 } }
+  .card .face{ position:absolute; inset:0; display:grid; place-items:center; font-weight:800; font-size:26px; color:#0c1524 }
+  .card.red{ color:#c42033 } /* ♥ ♦ */
+  .card.back{
+    background:repeating-linear-gradient(45deg, #152033, #152033 10px, #0f1726 10px, #0f1726 20px);
+  }
+  .card .pip{ font-size:20px }
+
+  .toast{
+    position:absolute; inset:auto 16px 16px auto; z-index:5;
+    background:#0f1a2a; border:1px solid var(--edge); border-radius:12px; padding:10px 14px;
+    box-shadow:var(--shadow); pointer-events:none; opacity:0; transform:translateY(8px);
+    transition:opacity .25s, transform .25s;
+  }
+  .toast.show{ opacity:1; transform:translateY(0) }
+
+  /* Historie */
+  .history{ padding:12px }
+  .history .item{
+    padding:10px 12px; border:1px solid var(--edge); border-radius:10px; background:#0f1726;
+    display:flex; justify-content:space-between; gap:8px;
+  }
+  .history .item+.item{ margin-top:8px }
+  .delta{ font-weight:700 }
+  .delta.win{ color:var(--good) } .delta.lose{ color:var(--bad) } .delta.push{ color:var(--muted) }
+
+  .actionbar{
+    display:flex; gap:8px; padding:12px; border-top:1px solid var(--edge);
+    background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 30%), var(--panel);
+    border-radius:0 0 14px 14px;
+    align-items:center; /* proti svislému roztahování tlačítek */
+    flex-wrap:wrap;
+  }
+  .tag{ font-size:11px; color:#08111e; background:var(--gold); border-radius:999px; padding:2px 8px; font-weight:700 }
+  .divider{ height:1px; background:var(--edge); margin:4px 0 10px }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- LEVÝ PANEL: Balance & sázky -->
+    <aside class="panel" id="left">
+      <h2>Balance & sázka</h2>
+      <div class="controls">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div class="muted" style="font-size:12px">Zůstatek</div>
+            <div class="stat" id="balanceView" style="font-size:22px; font-weight:800">1 000.00</div>
+          </div>
+          <button class="btn ghost" id="editBalanceBtn" title="Změnit zůstatek">Upravit</button>
+        </div>
+        <div class="row">
+          <input type="number" id="balanceInput" min="0" step="0.01" placeholder="Nový zůstatek" style="display:none">
+          <button class="btn good" id="saveBalanceBtn" style="display:none">Uložit</button>
+          <button class="btn" id="cancelBalanceBtn" style="display:none">Zpět</button>
+        </div>
+        <div class="divider"></div>
+        <div>
+          <div class="muted" style="font-size:12px">Sázka</div>
+          <div class="row"><input type="number" id="bet" min="1" step="1" value="10"></div>
+          <div class="row">
+            <button class="btn pill" data-betadd="10">+10</button>
+            <button class="btn pill" data-betadd="100">+100</button>
+            <button class="btn pill" data-betadd="1000">+1 000</button>
+            <button class="btn pill" id="betHalf">½</button>
+            <button class="btn pill" id="betDouble">2×</button>
+            <button class="btn pill bad" id="betMax">Max</button>
+            <button class="btn pill" id="betReset">Reset</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <button class="btn accent" id="dealBtn">Rozdat</button>
+          <button class="btn" id="newShoeBtn" title="Míchat 6 balíčků">Nový shoe</button>
+        </div>
+        <div class="muted" style="font-size:12px">
+          Pravidla: S17 • Blackjack 3:2 • Double po prvních 2 kartách • Split párů (10/J/Q/K lze) • Split A,A = 1 karta a stop • Bez pojištění.
+        </div>
+      </div>
+    </aside>
+
+    <!-- STŮL -->
+    <main class="table panel">
+      <div class="toast" id="toast"></div>
+      <div class="felt" id="felt">
+        <div class="labels"><div>Dealer</div><div class="tag">BLACKJACK</div></div>
+        <div class="zone">
+          <div class="hand dealer">
+            <div class="cards" id="dealer"></div>
+            <div class="score" id="dealerScore">–</div>
+          </div>
+        </div>
+
+        <div class="labels" style="margin-top:8px">
+          <div>Hráč</div>
+          <div class="muted stat" id="roundInfo">Shoe: 6×52 • Reshuffle pod 25 %</div>
+        </div>
+
+        <div class="zone">
+          <div class="player-hands" id="playerHands"></div>
+        </div>
+      </div>
+
+      <!-- pořadí: Hit, Stand, Double, Split -->
+      <div class="actionbar">
+        <button class="btn good" id="hitBtn" disabled>Hit</button>
+        <button class="btn bad" id="standBtn" disabled>Stand</button>
+        <button class="btn accent" id="doubleBtn" disabled>Double</button>
+        <button class="btn split" id="splitBtn" disabled>Split</button>
+        <div style="margin-left:auto" class="muted">Sázka: <span class="stat" id="betView">10</span></div>
+      </div>
+    </main>
+
+    <!-- PRAVÝ PANEL: Historie -->
+    <aside class="panel">
+      <h2>Historie</h2>
+      <div class="history" id="history"></div>
+    </aside>
+  </div>
+
+<script>
+(() => {
+  // ---------- Utils ----------
+  const fmt = v => Number(v).toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+  const rngInt = (n)=>{
+    if (window.crypto && crypto.getRandomValues){
+      const x=new Uint32Array(1); crypto.getRandomValues(x); return x[0]%n;
+    }
+    return Math.floor(Math.random()*n);
+  };
+
+  // ---------- State ----------
+  const state = {
+    balance: 1000,
+    baseBet: 10,
+    shoe: [],
+    shoeSize: 312,
+    penetrationCutoff: 0.25,
+    inRound: false,
+    dealer: [],
+    playerHands: [],         // [{cards:[], bet, canDouble, isDone, isSplitAces}]
+    activeHand: 0,
+  };
+
+  // ---------- DOM ----------
+  const el = {
+    balanceView: document.getElementById('balanceView'),
+    betInput: document.getElementById('bet'),
+    betView: document.getElementById('betView'),
+    dealBtn: document.getElementById('dealBtn'),
+    newShoeBtn: document.getElementById('newShoeBtn'),
+    hitBtn: document.getElementById('hitBtn'),
+    standBtn: document.getElementById('standBtn'),
+    doubleBtn: document.getElementById('doubleBtn'),
+    splitBtn: document.getElementById('splitBtn'),
+    dealer: document.getElementById('dealer'),
+    dealerScore: document.getElementById('dealerScore'),
+    playerHands: document.getElementById('playerHands'),
+    toast: document.getElementById('toast'),
+    history: document.getElementById('history'),
+    roundInfo: document.getElementById('roundInfo'),
+    editBalanceBtn: document.getElementById('editBalanceBtn'),
+    balanceInput: document.getElementById('balanceInput'),
+    saveBalanceBtn: document.getElementById('saveBalanceBtn'),
+    cancelBalanceBtn: document.getElementById('cancelBalanceBtn'),
+  };
+
+  // ---------- Shoe / Deck ----------
+  function buildDeck(){
+    const ranks=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+    const suits=['♠','♥','♦','♣'];
+    const deck=[];
+    for (const s of suits){ for (const r of ranks){ deck.push({r,s}); } }
+    return deck;
+  }
+  function buildShoe(n=6){
+    let shoe=[]; for(let i=0;i<n;i++) shoe=shoe.concat(buildDeck());
+    for(let i=shoe.length-1;i>0;i--){ const j=rngInt(i+1); [shoe[i],shoe[j]]=[shoe[j],shoe[i]]; }
+    state.shoeSize = shoe.length; return shoe;
+  }
+  function ensureShoe(){
+    if (!state.shoe.length || state.shoe.length < state.shoeSize*state.penetrationCutoff){
+      state.shoe = buildShoe(6);
+      showToast('Nový shoe (6×52) zamíchán.'); updateRoundInfo();
+    }
+  }
+  function drawCard(){ ensureShoe(); return state.shoe.pop(); }
+
+  // ---------- Values ----------
+  function handValue(cards){
+    let total=0, aces=0;
+    for(const {r} of cards){
+      if (r==='A'){ aces++; continue; }
+      if (r==='K'||r==='Q'||r==='J'||r==='10'){ total+=10; continue; }
+      total += Number(r); // 2..9
+    }
+    total += aces*11;
+    while(total>21 && aces>0){ total-=10; aces--; }
+    return total;
+  }
+  const isBlackjack = h => h.length===2 && handValue(h)===21;
+
+  // ---------- UI helpers ----------
+  function cardEl(card,{hidden=false,delay=0}={}){
+    const div=document.createElement('div');
+    div.className='card'+(hidden?' back':'')+((card.s==='♥'||card.s==='♦')?' red':'');
+    div.style.animationDelay=`${delay}ms`;
+    const face=document.createElement('div'); face.className='face';
+    if (!hidden){
+      face.innerHTML=`<div style="display:grid;place-items:center">
+        <div>${card.r}</div><div class="pip">${card.s}</div></div>`;
+    }
+    div.appendChild(face);
+    return div;
+  }
+  function showToast(msg){
+    el.toast.textContent=msg; el.toast.classList.add('show');
+    clearTimeout(showToast._t); showToast._t=setTimeout(()=>el.toast.classList.remove('show'),2400);
+  }
+  function updateRoundInfo(){
+    const left=state.shoe.length,total=state.shoeSize||312;
+    const pct=Math.round((left/total)*100);
+    el.roundInfo.textContent=`Shoe: 6×52 • Zbývá ~${pct}% • Reshuffle pod ${Math.round(state.penetrationCutoff*100)}%`;
+  }
+  function renderBalance(){ el.balanceView.textContent=fmt(state.balance); }
+  function syncBetUI(){ el.betView.textContent=fmt(state.baseBet); }
+
+  // ------- Player DOM helpers (append-only rendering) -------
+  function createPlayerHandDom(idx){
+    const hand=state.playerHands[idx];
+    const wrap=document.createElement('div');
+    wrap.className='hand player'+(idx===state.activeHand?' active':'');
+    wrap.dataset.handIndex=String(idx);
+
+    const tag=document.createElement('div');
+    tag.className='bettag'; tag.textContent=`Sázka ${fmt(hand.bet)}`;
+    wrap.appendChild(tag);
+
+    const cardsDiv=document.createElement('div'); cardsDiv.className='cards';
+    cardsDiv.dataset.cardsCount='0'; // kolik karet je v DOM
+    wrap.appendChild(cardsDiv);
+
+    const sc=document.createElement('div'); sc.className='score'; sc.textContent=handValue(hand.cards);
+    wrap.appendChild(sc);
+
+    el.playerHands.appendChild(wrap);
+    appendMissingCards(idx, /*baseDelay*/0);
+    return wrap;
+  }
+
+  function getHandWrap(idx){
+    return el.playerHands.querySelector(`.hand.player[data-hand-index="${idx}"]`);
+  }
+  function appendMissingCards(idx, baseDelay=0){
+    const hand=state.playerHands[idx];
+    let wrap=getHandWrap(idx);
+    if (!wrap){ wrap=createPlayerHandDom(idx); }
+    const cardsDiv=wrap.querySelector('.cards');
+    const have=Number(cardsDiv.dataset.cardsCount||0);
+    for(let i=have;i<hand.cards.length;i++){
+      const delay=baseDelay + i*220; // pomalejší dávkování
+      cardsDiv.appendChild(cardEl(hand.cards[i],{delay}));
+    }
+    cardsDiv.dataset.cardsCount=String(hand.cards.length);
+    // score:
+    wrap.querySelector('.score').textContent = handValue(hand.cards);
+    // active outline:
+    el.playerHands.querySelectorAll('.hand.player').forEach((w,j)=>{
+      if (j===state.activeHand) w.classList.add('active'); else w.classList.remove('active');
+    });
+  }
+
+  // Dealer – také append-only
+  function dealerReset(showHole=false){
+    el.dealer.innerHTML='';
+    // dvě karty přidáme s postupným zpožděním
+    if (state.dealer[0]) el.dealer.appendChild(cardEl(state.dealer[0],{hidden:!showHole,delay:0}));
+    if (state.dealer[1]) el.dealer.appendChild(cardEl(state.dealer[1],{hidden:false,delay:220}));
+    el.dealerScore.textContent = showHole ? handValue(state.dealer) : (state.dealer.length ? '?' : '–');
+  }
+  function dealerRevealHole(){
+    // přepni první kartu z "back" na face
+    const first=el.dealer.children[0];
+    if (first){ first.classList.remove('back'); first.querySelector('.face')?.replaceChildren(); }
+    // přepiš celé, aby se doplnily symboly (jednodušeji překreslím první prvek):
+    el.dealer.replaceChild(cardEl(state.dealer[0],{hidden:false,delay:0}), first);
+    el.dealerScore.textContent = handValue(state.dealer);
+  }
+  function dealerAppendNew(){
+    const i = el.dealer.children.length;
+    const c = state.dealer[i];
+    if (!c) return;
+    el.dealer.appendChild(cardEl(c,{hidden:false,delay:180}));
+    el.dealerScore.textContent = handValue(state.dealer);
+  }
+
+  function clearTable(){
+    el.dealer.innerHTML=''; el.dealerScore.textContent='–';
+    el.playerHands.innerHTML='';
+  }
+
+  function setActions(){
+    const inRound = state.inRound;
+    const h = state.playerHands[state.activeHand];
+    const canPlay = inRound && h && !h.isDone;
+    const firstTwo = (h && h.cards.length===2);
+    const canDouble = canPlay && firstTwo && h.canDouble && !h.isSplitAces;
+    const canSplit = canPlay && firstTwo && canSplitNow(h) && (state.balance >= h.bet);
+
+    el.hitBtn.disabled = !canPlay || h.isSplitAces;
+    el.standBtn.disabled = !canPlay;
+    el.doubleBtn.disabled = !canDouble;
+    el.splitBtn.disabled = !canSplit;
+    el.dealBtn.disabled = inRound;
+  }
+
+  function canSplitNow(hand){
+    const [a,b] = hand.cards;
+    if (!a || !b) return false;
+    if (a.r === b.r) return true;
+    const ten = v => (v==='10'||v==='J'||v==='Q'||v==='K');
+    return ten(a.r) && ten(b.r);
+  }
+
+  function addHistoryLine(result, profit, handIdx){
+    const item=document.createElement('div'); item.className='item';
+    const lh=document.createElement('div');
+    const playerCards = state.playerHands[handIdx].cards;
+    lh.innerHTML=`<div class="muted" style="font-size:12px">${result} (Hand ${handIdx+1})</div>
+                  <div>Hráč ${handValue(playerCards)} vs Dealer ${handValue(state.dealer)}</div>`;
+    const rh=document.createElement('div');
+    const cls = profit>0?'win':(profit<0?'lose':'push');
+    const bet = state.playerHands[handIdx].bet;
+    rh.innerHTML=`<div class="muted" style="font-size:12px">Sázka ${fmt(bet)}</div>
+                  <div class="delta ${cls}">${profit>0?'+':''}${fmt(profit)}</div>`;
+    item.appendChild(lh); item.appendChild(rh); document.getElementById('history').prepend(item);
+    const hist=document.getElementById('history');
+    while(hist.children.length>14) hist.lastChild.remove();
+  }
+
+  // ---------- Flow ----------
+  function startRound(){
+    const bet = clamp(Math.floor(Number(el.betInput?.value ?? state.baseBet)),1,Math.floor(state.balance));
+    state.baseBet = bet; syncBetUI();
+    if (bet<1){ showToast('Sázka je příliš nízká.'); return; }
+    if (bet>state.balance){ showToast('Nedostatek prostředků.'); return; }
+
+    state.inRound = true;
+    state.dealer = [];
+    state.playerHands = [{ cards: [], bet: bet, canDouble: true, isDone: false, isSplitAces:false }];
+    state.activeHand = 0;
+    state.balance -= bet; renderBalance();
+
+    clearTable();
+
+    // Deal: P, D(hole), P, D(up) – pomalejší dávky
+    const p1=drawCard(), d1=drawCard(), p2=drawCard(), d2=drawCard();
+    state.playerHands[0].cards.push(p1);
+    createPlayerHandDom(0); // vytvoří DOM a přidá 1. kartu
+    setTimeout(()=>{
+      state.dealer.push(d1);
+      dealerReset(false); // založí dealerovy karty (první schovaná)
+      setActions();
+      setTimeout(()=>{
+        state.playerHands[0].cards.push(p2);
+        appendMissingCards(0, 0);
+        setTimeout(()=>{
+          state.dealer.push(d2);
+          dealerReset(false); // přidá druhou odkrytou
+          setActions();
+          // Natural check
+          setTimeout(()=>{
+            const pBJ = isBlackjack(state.playerHands[0].cards);
+            const dBJ = isBlackjack(state.dealer);
+            if (pBJ || dBJ){
+              dealerRevealHole();
+              if (pBJ && dBJ){
+                state.balance += state.baseBet;
+                addHistoryLine('Push – oba blackjack', 0, 0);
+                showToast('Push – oba blackjack');
+              } else if (pBJ){
+                const win = state.baseBet * 1.5;
+                state.balance += state.baseBet + win;
+                addHistoryLine('Výhra – Blackjack 3:2', +win, 0);
+                showToast('Blackjack! 3:2');
+              } else {
+                addHistoryLine('Prohra – Dealer blackjack', -state.baseBet, 0);
+                showToast('Dealer blackjack');
+              }
+              renderBalance();
+              endRound();
+            } else {
+              setActions();
+            }
+          }, 250);
+        }, 240);
+      }, 240);
+    }, 240);
+  }
+
+  function doHit(){
+    const h = state.playerHands[state.activeHand];
+    if (!state.inRound || !h || h.isDone || h.isSplitAces) return;
+    h.canDouble = false;
+    const c = drawCard(); h.cards.push(c);
+    appendMissingCards(state.activeHand, 0); setActions();
+    if (handValue(h.cards) > 21){
+      h.isDone = true;
+      showToast(`Bust – Hand ${state.activeHand+1}`);
+      nextHandOrDealer();
+    }
+  }
+
+  function doStand(){
+    const h = state.playerHands[state.activeHand];
+    if (!state.inRound || !h || h.isDone) return;
+    h.isDone = true; h.canDouble = false;
+    nextHandOrDealer();
+  }
+
+  function doDouble(){
+    const h = state.playerHands[state.activeHand];
+    if (!state.inRound || !h || h.isDone || !h.canDouble || h.isSplitAces) return;
+    if (state.balance < h.bet){ showToast('Nedostatek prostředků pro Double.'); return; }
+    state.balance -= h.bet; h.bet *= 2; h.canDouble=false; renderBalance();
+
+    const c = drawCard(); h.cards.push(c);
+    appendMissingCards(state.activeHand, 0);
+    h.isDone = true; // po double se stojí
+    nextHandOrDealer();
+  }
+
+  function doSplit(){
+    const h = state.playerHands[state.activeHand];
+    if (!state.inRound || !h || h.isDone || h.cards.length!==2) return;
+    if (!canSplitNow(h)) return;
+    if (state.balance < h.bet){ showToast('Nedostatek prostředků pro Split.'); return; }
+
+    const [c1, c2] = h.cards;
+    const bet2 = h.bet;
+    state.balance -= bet2; renderBalance();
+
+    const splitAces = (c1.r==='A' && c2.r==='A');
+
+    // Připrav dvě ruce
+    h.cards = [c1]; h.canDouble = true; h.isDone = false; h.isSplitAces = splitAces;
+    const newHand = { cards:[c2], bet:bet2, canDouble:true, isDone:false, isSplitAces:splitAces };
+    state.playerHands.splice(state.activeHand+1, 0, newHand);
+
+    // Překresli pouze strukturu kontejneru rukou (bez mazání karet)
+    el.playerHands.innerHTML='';
+    createPlayerHandDom(0);
+    for(let i=1;i<state.playerHands.length;i++) createPlayerHandDom(i);
+
+    // Každé ruce rozdej 1 kartu (append-only)
+    setTimeout(()=>{
+      h.cards.push(drawCard()); appendMissingCards(state.activeHand, 0);
+      newHand.cards.push(drawCard()); appendMissingCards(state.activeHand+1, 0);
+
+      if (splitAces){
+        h.isDone = true; newHand.isDone = true;
+        showToast('Split A,A – každá ruka 1 karta a stop');
+        nextHandOrDealer();
+      } else {
+        setActions();
+      }
+    }, 200);
+  }
+
+  function nextHandOrDealer(){
+    // najdi další nedohranou ruku
+    for (let i=0;i<state.playerHands.length;i++){
+      const idx = (state.activeHand + 1 + i) % state.playerHands.length;
+      if (!state.playerHands[idx].isDone){
+        state.activeHand = idx; appendMissingCards(idx, 0); setActions(); return;
+      }
+    }
+    dealerPlay();
+  }
+
+  function dealerPlay(){
+    dealerRevealHole();
+    const step=()=>{
+      const v=handValue(state.dealer);
+      if (v<17){
+        state.dealer.push(drawCard()); dealerAppendNew();
+        setTimeout(step, 420); // pomalejší dohrávání dealera
+      }else{
+        settleAll();
+      }
+    };
+    setTimeout(step, 480);
+  }
+
+  function settleAll(){
+    const d = handValue(state.dealer);
+    state.playerHands.forEach((h,idx)=>{
+      const p = handValue(h.cards);
+      let result='', profit=0;
+      if (p>21){ result='Prohra – Bust'; profit=-h.bet; }
+      else if (d>21){ result='Výhra – Dealer bust'; profit= h.bet; state.balance += h.bet*2; }
+      else if (p>d){ result='Výhra'; profit= h.bet; state.balance += h.bet*2; }
+      else if (p<d){ result='Prohra'; profit=-h.bet; }
+      else { result='Push'; profit=0; state.balance += h.bet; }
+      addHistoryLine(result, profit, idx);
+    });
+    renderBalance();
+    showToast('Konec kola');
+    endRound();
+  }
+
+  function endRound(){
+    state.inRound = false;
+    setActions();
+  }
+
+  // ---------- Events ----------
+  el.dealBtn.addEventListener('click', startRound);
+  el.hitBtn.addEventListener('click', doHit);
+  el.standBtn.addEventListener('click', doStand);
+  el.doubleBtn.addEventListener('click', doDouble);
+  el.splitBtn.addEventListener('click', doSplit);
+  el.newShoeBtn.addEventListener('click', ()=>{ state.shoe=[]; ensureShoe(); showToast('Shoe zamíchán.'); });
+
+  // Sázkové helpery
+  document.querySelectorAll('[data-betadd]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const add=Number(b.getAttribute('data-betadd'));
+      const next = clamp(Math.floor((Number(el.betInput.value)||state.baseBet)+add),1,Math.floor(state.balance||1));
+      el.betInput.value = next; state.baseBet = next; syncBetUI();
+    });
+  });
+  document.getElementById('betHalf').addEventListener('click', ()=>{
+    const next = Math.max(1, Math.floor((Number(el.betInput.value)||state.baseBet)/2));
+    el.betInput.value = next; state.baseBet = next; syncBetUI();
+  });
+  document.getElementById('betDouble').addEventListener('click', ()=>{
+    const next = clamp((Number(el.betInput.value)||state.baseBet)*2,1,Math.floor(state.balance||1));
+    el.betInput.value = next; state.baseBet = next; syncBetUI();
+  });
+  document.getElementById('betMax').addEventListener('click', ()=>{
+    const next = Math.max(1, Math.floor(state.balance));
+    el.betInput.value = next; state.baseBet = next; syncBetUI();
+  });
+  document.getElementById('betReset').addEventListener('click', ()=>{
+    el.betInput.value = 10; state.baseBet = 10; syncBetUI();
+  });
+  el.betInput.addEventListener('change', ()=>{ state.baseBet = clamp(Math.floor(el.betInput.value),1,Math.floor(state.balance||1)); syncBetUI(); });
+
+  // Balance edit
+  el.editBalanceBtn.addEventListener('click', ()=>{
+    el.balanceInput.style.display='block';
+    el.saveBalanceBtn.style.display='inline-block';
+    el.cancelBalanceBtn.style.display='inline-block';
+    el.editBalanceBtn.style.display='none';
+    el.balanceInput.value = state.balance.toFixed(2);
+  });
+  el.saveBalanceBtn.addEventListener('click', ()=>{
+    const v = Math.max(0, Number(el.balanceInput.value||0));
+    state.balance = Math.floor(v*100)/100;
+    renderBalance();
+    el.balanceInput.style.display='none';
+    el.saveBalanceBtn.style.display='none';
+    el.cancelBalanceBtn.style.display='none';
+    el.editBalanceBtn.style.display='inline-block';
+    showToast('Zůstatek aktualizován.');
+    syncBetUI();
+  });
+  el.cancelBalanceBtn.addEventListener('click', ()=>{
+    el.balanceInput.style.display='none';
+    el.saveBalanceBtn.style.display='none';
+    el.cancelBalanceBtn.style.display='none';
+    el.editBalanceBtn.style.display='inline-block';
+  });
+
+  // Init
+  ensureShoe(); renderBalance(); syncBetUI(); clearTable(); setActions(); // tlačítka nejsou roztažená
+
+  // Klávesové zkratky
+  window.addEventListener('keydown', (e)=>{
+    if (e.key.toLowerCase()==='h') el.hitBtn.click();
+    if (e.key.toLowerCase()==='s') el.standBtn.click();
+    if (e.key.toLowerCase()==='d') el.doubleBtn.click();
+    if (e.key.toLowerCase()==='x') el.splitBtn.click();   // Split
+    if (e.key==='Enter') el.dealBtn.click();
+  });
+})();
+</script>
+</body>
+</html>
