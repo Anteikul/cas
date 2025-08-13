@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -76,7 +76,7 @@
   .line{
   position:relative; height:12px; border-radius:999px;
   background:#0b1526; outline:1px solid #1e3356;
-  overflow:visible; /* důležité, aby marker nebyl uříznut */
+  overflow:visible; /* important so marker isn't cut off */
 }
 .seg{ position:absolute; top:0; bottom:0; z-index:0; }
 .handle{ z-index:1; }
@@ -90,7 +90,7 @@
   pointer-events:none; z-index:2;
 }
 
-/* přidej vrstvy */
+/* add layers */
 .seg{ position:absolute; top:0; bottom:0; z-index:0; }
 .handle{ z-index:1; }
 .marker{ z-index:2; }
@@ -104,7 +104,7 @@
   /* Marker above the line, with tip */
   .marker{
     position:absolute; left:0%; transform:translate(-50%,-100%) translateX(-40px);
-    top:-10px; /* nad lajnou, tip míří na lajnu */
+    top:-10px; /* above the line, tip points to the line */
     min-width:84px; padding:8px 10px; border-radius:10px; text-align:center;
     background:#0d1729; border:1px solid var(--edge); color:var(--text);
     box-shadow:0 6px 20px rgba(0,0,0,.35);
@@ -153,7 +153,7 @@
     <a class="lobby-btn" href="../../index.html">← Lobby</a>
     <div class="brand">🎲 Dice (Mines skin)</div>
     <div class="pill">HE: <strong id="heTop">1.00%</strong></div>
-    <div class="pill">Pravidlo: <strong id="ruleTop">Under (target 49.00)</strong></div>
+    <div class="pill">Rule: <strong id="ruleTop">Under (target 49.00)</strong></div>
     <div class="balanceBox" id="balanceBox">
       <span>Balance:</span> <strong id="balance" class="balance-amount">1 000.00</strong>
     </div>
@@ -162,15 +162,15 @@
   <div class="wrap">
     <!-- LEFT: inputs -->
     <div class="card">
-      <h2>Sázka & režim</h2>
+      <h2>Bet & Mode</h2>
       <div class="section">
         <div class="col" style="gap:12px">
-          <!-- VLASTNÍ ČÁSTKA – samostatný plný řádek -->
+          <!-- CUSTOM AMOUNT – full row -->
           <div class="col">
-            <label class="muted" for="betAmount">Částka sázky</label>
+            <label class="muted" for="betAmount">Bet amount</label>
             <input id="betAmount" class="full" type="number" min="0" step="0.01" value="10" />
           </div>
-          <!-- AŽ PODTÍM tlačítka -->
+          <!-- BUTTONS BELOW -->
           <div class="row">
             <button class="btn ghost" data-bet="+1">+1</button>
             <button class="btn ghost" data-bet="+10">+10</button>
@@ -203,7 +203,7 @@
 
     <!-- CENTER: hero line -->
     <div class="card">
-      <h2>Hra</h2>
+      <h2>Game</h2>
       <div class="section hero">
         <div class="lineWrap" id="lineWrap">
           <div class="line" id="line">
@@ -216,7 +216,7 @@
             <div class="tick" style="left:100%"></div>
             <div class="handle" id="handle" title="Target"></div>
 
-            <!-- Marker žije uvnitř .line, takže left:% sedí přesně -->
+            <!-- Marker lives inside .line, so left:% aligns exactly -->
             <div class="marker" id="marker" style="display:none">
               <div class="roll" id="markerRoll">0.00</div>
               <div class="bet" id="markerBet">Bet: 0.00</div>
@@ -233,10 +233,10 @@
     </div>
   </div>
 
-  <!-- Moje sázky -->
+  <!-- My bets -->
   <div style="padding:0 16px 16px">
     <div class="card">
-      <h2>Moje sázky</h2>
+      <h2>My Bets</h2>
       <div class="section" id="tableMine"></div>
       <div class="history" id="history"></div>
     </div>
@@ -262,11 +262,11 @@
           </div>
         </div>
         <div class="row" style="margin-top:8px">
-          <button id="randomizeSeeds" class="btn">Náhodně</button>
-          <button id="pfClose" class="btn ghost">Zavřít</button>
+          <button id="randomizeSeeds" class="btn">Randomize</button>
+          <button id="pfClose" class="btn ghost">Close</button>
         </div>
         <div class="row" style="margin-top:8px">
-          <div class="muted" style="font-size:12px">Výsledek: <span class="mono">roll = (HMAC_SHA256(serverSeed, `${clientSeed}:${nonce}`)[0..3] / 2^32) × 100</span> (0–99.99). Každá sázka zvyšuje nonce o 1.</div>
+          <div class="muted" style="font-size:12px">Outcome: <span class="mono">roll = (HMAC_SHA256(serverSeed, `${clientSeed}:${nonce}`)[0..3] / 2^32) × 100</span> (0–99.99). Each bet increases the nonce by 1.</div>
         </div>
       </div>
     </div>
@@ -318,12 +318,12 @@
   function qa(s, r=document){ return Array.from(r.querySelectorAll(s)); }
   const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
   const fmt2 = n => (Math.round(n*100)/100).toFixed(2);
-  function nowTime(){ const d=new Date(); return d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
-  function updateBalanceView(){ s.balance = walletGet(); el.balance.textContent = s.balance.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function nowTime(){ const d=new Date(); return d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
+  function updateBalanceView(){ s.balance = walletGet(); el.balance.textContent = s.balance.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function creditAnimation(amount){
     const tag = document.createElement('div');
     tag.className = 'creditFloat';
-    tag.textContent = `+${amount.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    tag.textContent = `+${amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
     el.balanceBox.appendChild(tag);
     el.balanceBox.classList.remove('balancePulse'); void el.balanceBox.offsetWidth; el.balanceBox.classList.add('balancePulse');
     setTimeout(()=> tag.remove(), 1000);
@@ -397,7 +397,7 @@
   // ===== Bets table & history =====
   function renderMine(){
     const rows = s.myBets.slice(0,200);
-    const headers = ['Čas','Sázka','Pravidlo','Výsledek','Stav','Výhra'];
+    const headers = ['Time','Bet','Rule','Roll','Status','Win'];
     const html = [
       '<div style="overflow:auto"><table><thead><tr>',
       ...headers.map(h=>`<th>${h}</th>`),
@@ -443,39 +443,39 @@
 
     s.rolling = true; setDisabled(true);
 
-   // Připrav marker – vždy start z LEVÉHO kraje
+  // Prepare marker – always start from LEFT edge
 const m = el.marker;
 m.style.display = 'block';
 m.className = 'marker';
 el.markerRoll.textContent = '…';
 el.markerBet.textContent = 'Bet: ' + fmt2(s.bet);
 
-// 1) Vypnout přechod a resetnout pozici na levý okraj
+// 1) Disable transition and reset position to left edge
 m.style.transition = 'none';
 m.style.left = '0%';
 m.style.transform = 'translate(-50%,-100%)';
 
-// Force reflow, ať se reset aplikuje
+// Force reflow so reset applies
 void m.offsetWidth;
 
-// 2) Vypočti výsledek a cílové % (jako už děláš)
+// 2) Compute result and target %
 const roll = await pfRoll(s.serverSeed, s.clientSeed, s.nonce);
 s.nonce++;
 const pct = Math.max(0, Math.min(99.99, roll));
 
-// 3) Zapnout přechod a spustit jízdu zleva → na cíl
+// 3) Enable transition and animate from left to target
 m.style.transition = 'left 0.9s cubic-bezier(.2,.8,.2,1), transform 0.9s cubic-bezier(.2,.8,.2,1)';
 el.markerRoll.textContent = roll.toFixed(2);
-m.style.left = pct + '%';          // tímto se rozjede animace z 0% na pct%
+ m.style.left = pct + '%';          // this starts animation from 0% to pct%
 m.style.transform = 'translate(-50%,-100%)';
 
-// počkej na dojetí (stejný čas jako v CSS)
+// wait for animation to finish (same duration as CSS)
 await new Promise(r=>setTimeout(r, 950));
 
-// ... dál beze změn: win/lose, barvy, balance, log atd.
+// rest unchanged: win/lose, colors, balance, log etc.
 
 
-    // Vyhodnocení
+    // Evaluation
     const win = (s.uo==='under') ? (roll < s.target) : (roll > s.target);
     const payout = ((100 - s.houseEdge) / s.chance);
     const won = win ? s.bet * payout : 0;
@@ -514,7 +514,7 @@ await new Promise(r=>setTimeout(r, 950));
     t.classList.add('active'); s.uo = t.dataset.uo; drawLine();
   }));
 
-  // Handle drag listeners už výše
+  // Handle drag listeners already above
 
   // PF dialog
   el.pfBtn.addEventListener('click', ()=> el.pfDialog.showModal());
