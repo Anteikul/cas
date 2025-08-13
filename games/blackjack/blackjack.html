@@ -57,6 +57,22 @@
   .stat{ font-variant-numeric:tabular-nums; }
   .muted{ color:var(--muted) }
 
+  /* --- Unified Lobby button --- */
+  .lobby-row{ margin-bottom:8px }
+  .lobby-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:10px 12px;
+    border:1px solid var(--edge);
+    border-radius:12px;
+    background:transparent;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:600;
+    cursor:pointer;
+    width:auto; min-width:0;
+  }
+  .lobby-btn:hover{ background:rgba(255,255,255,.04) }
+
   .table{
     position:relative; padding:16px; display:grid; gap:16px; min-height:560px;
     background:
@@ -148,17 +164,12 @@
     <aside class="panel" id="left">
       <h2>Balance & sázka</h2>
       <div class="controls">
-        <div class="row" style="justify-content:space-between">
+        <div class="lobby-row"><a class="lobby-btn" href="../../index.html">← Lobby</a></div>
+        <div class="row">
           <div>
             <div class="muted" style="font-size:12px">Zůstatek</div>
             <div class="stat" id="balanceView" style="font-size:22px; font-weight:800">1 000.00</div>
           </div>
-          <button class="btn ghost" id="editBalanceBtn" title="Změnit zůstatek">Upravit</button>
-        </div>
-        <div class="row">
-          <input type="number" id="balanceInput" min="0" step="0.01" placeholder="Nový zůstatek" style="display:none">
-          <button class="btn good" id="saveBalanceBtn" style="display:none">Uložit</button>
-          <button class="btn" id="cancelBalanceBtn" style="display:none">Zpět</button>
         </div>
         <div class="divider"></div>
         <div>
@@ -236,9 +247,14 @@
     return Math.floor(Math.random()*n);
   };
 
+  // ----- Shared wallet -----
+  const WALLET_KEY = 'wallet.balance';
+  function walletGet(){ try{ return Number(JSON.parse(localStorage.getItem(WALLET_KEY))||1000); }catch{ return 1000; } }
+  function walletSet(v){ localStorage.setItem(WALLET_KEY, JSON.stringify(Math.max(0, Number(v)||0))); }
+
   // ---------- State ----------
   const state = {
-    balance: 1000,
+    balance: walletGet(),
     baseBet: 10,
     shoe: [],
     shoeSize: 312,
@@ -266,10 +282,6 @@
     toast: document.getElementById('toast'),
     history: document.getElementById('history'),
     roundInfo: document.getElementById('roundInfo'),
-    editBalanceBtn: document.getElementById('editBalanceBtn'),
-    balanceInput: document.getElementById('balanceInput'),
-    saveBalanceBtn: document.getElementById('saveBalanceBtn'),
-    cancelBalanceBtn: document.getElementById('cancelBalanceBtn'),
   };
 
   // ---------- Shoe / Deck ----------
@@ -329,7 +341,7 @@
     const pct=Math.round((left/total)*100);
     el.roundInfo.textContent=`Shoe: 6×52 • Zbývá ~${pct}% • Reshuffle pod ${Math.round(state.penetrationCutoff*100)}%`;
   }
-  function renderBalance(){ el.balanceView.textContent=fmt(state.balance); }
+  function renderBalance(){ walletSet(state.balance); el.balanceView.textContent=fmt(state.balance); }
   function syncBetUI(){ el.betView.textContent=fmt(state.baseBet); }
 
   // ------- Player DOM helpers (append-only rendering) -------
@@ -653,32 +665,6 @@
     el.betInput.value = 10; state.baseBet = 10; syncBetUI();
   });
   el.betInput.addEventListener('change', ()=>{ state.baseBet = clamp(Math.floor(el.betInput.value),1,Math.floor(state.balance||1)); syncBetUI(); });
-
-  // Balance edit
-  el.editBalanceBtn.addEventListener('click', ()=>{
-    el.balanceInput.style.display='block';
-    el.saveBalanceBtn.style.display='inline-block';
-    el.cancelBalanceBtn.style.display='inline-block';
-    el.editBalanceBtn.style.display='none';
-    el.balanceInput.value = state.balance.toFixed(2);
-  });
-  el.saveBalanceBtn.addEventListener('click', ()=>{
-    const v = Math.max(0, Number(el.balanceInput.value||0));
-    state.balance = Math.floor(v*100)/100;
-    renderBalance();
-    el.balanceInput.style.display='none';
-    el.saveBalanceBtn.style.display='none';
-    el.cancelBalanceBtn.style.display='none';
-    el.editBalanceBtn.style.display='inline-block';
-    showToast('Zůstatek aktualizován.');
-    syncBetUI();
-  });
-  el.cancelBalanceBtn.addEventListener('click', ()=>{
-    el.balanceInput.style.display='none';
-    el.saveBalanceBtn.style.display='none';
-    el.cancelBalanceBtn.style.display='none';
-    el.editBalanceBtn.style.display='inline-block';
-  });
 
   // Init
   ensureShoe(); renderBalance(); syncBetUI(); clearTable(); setActions(); // tlačítka nejsou roztažená
