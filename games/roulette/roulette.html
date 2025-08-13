@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Webová ruleta – EU (single‑zero)</title>
+<title>Roulette – EU (single-zero)</title>
 <style>
   :root{
     --bg:#0b0f14; --panel:#121825; --edge:#1c2940; --muted:#9bb0c9; --text:#e7f1fb;
@@ -117,15 +117,15 @@
 
     <div class="balance-pill">
       <strong>Balance</strong>
-      <input id="balance" type="text" inputmode="decimal" aria-label="Zůstatek" />
+      <input id="balance" type="text" inputmode="decimal" aria-label="Balance" />
     </div>
   </header>
 
   <main class="wrap">
     <!-- LEFT: WHEEL -->
-    <section class="panel wheel-panel" aria-label="Ruletové kolo">
+    <section class="panel wheel-panel" aria-label="Roulette Wheel">
       <div class="wheel-box">
-        <svg id="wheel" viewBox="-200 -200 400 400" aria-label="Kolo">
+        <svg id="wheel" viewBox="-200 -200 400 400" aria-label="Wheel">
           <g id="wheelGroup"></g>
           <g id="pockets"></g>
           <g id="labels"></g>
@@ -140,23 +140,23 @@
     </section>
 
     <!-- CENTER: TABLE -->
-    <section class="panel table-panel" aria-label="Plátno sázek">
-      <h3>Plátno sázek</h3>
-      <div id="table" class="betting-grid" role="grid" aria-label="Sázkové pole"></div>
+    <section class="panel table-panel" aria-label="Betting Board">
+      <h3>Betting Board</h3>
+      <div id="table" class="betting-grid" role="grid" aria-label="Betting Grid"></div>
 
       <div class="controls">
-        <div class="chip-row" id="chips" role="group" aria-label="Žetony">
+        <div class="chip-row" id="chips" role="group" aria-label="Chips">
           <!-- chip buttons injected -->
         </div>
         <div class="chip-custom">
-          <input id="chip-custom-value" placeholder="Vlastní žeton (např. 2.50)" inputmode="decimal" />
-          <button id="chip-add-btn" title="Přidat vlastní žeton">+ Přidat</button>
+          <input id="chip-custom-value" placeholder="Custom chip (e.g. 2.50)" inputmode="decimal" />
+          <button id="chip-add-btn" title="Add custom chip">+ Add</button>
         </div>
         <div class="action-row">
-          <button id="btn-undo" title="Krok zpět (Undo)">Undo</button>
-          <button id="btn-redo" title="Krok vpřed (Redo)">Redo</button>
-          <button id="btn-repeat" title="Opakovat minulé sázky">Repeat</button>
-          <button id="btn-double" title="Zdvojnásobit všechny položky">Double</button>
+          <button id="btn-undo" title="Undo">Undo</button>
+          <button id="btn-redo" title="Redo">Redo</button>
+          <button id="btn-repeat" title="Repeat previous bets">Repeat</button>
+          <button id="btn-double" title="Double all bets">Double</button>
         </div>
         <div class="spin-row">
           <button class="spin-btn" id="btn-spin">Spin</button>
@@ -164,20 +164,20 @@
             <input type="checkbox" id="pf-enable" /> Provably‑fair (HMAC)
           </label>
         </div>
-        <input id="client-seed" placeholder="Client seed (volitelné)" style="display:none" />
+        <input id="client-seed" placeholder="Client seed (optional)" style="display:none" />
       </div>
     </section>
 
     <!-- RIGHT: HISTORY -->
-    <aside class="panel history-panel" aria-label="Historie a výplaty">
-      <h3>Historie</h3>
+    <aside class="panel history-panel" aria-label="History and Payouts">
+      <h3>History</h3>
       <div id="history" class="history-list" aria-live="polite"></div>
 
       <h3>Info</h3>
       <div class="info-box">
-        <div>EU (single‑zero) pořadí kapes: <code>0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26</code></div>
-        <div>Výplaty: Straight 35:1 · Dozen/Column 2:1 · Red/Black/Even/Odd/Low/High 1:1</div>
-        <div>Tip: Pravé kliknutí na políčko = odebrat vybraný žeton. Dlouhý stisk na mobilu také odebere.</div>
+        <div>EU (single‑zero) pocket order: <code>0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26</code></div>
+        <div>Payouts: Straight 35:1 · Dozen/Column 2:1 · Red/Black/Even/Odd/Low/High 1:1</div>
+        <div>Tip: Right-click a cell to remove the selected chip. Long press on mobile also removes it.</div>
       </div>
     </aside>
   </main>
@@ -211,7 +211,7 @@
   const LOW = new Set(Array.from({length:18},(_,i)=>i+1));
   const HIGH = new Set(Array.from({length:18},(_,i)=>i+19));
 
-  let CHIP_VALUES = [1,5,25,100,500,1000]; // v centech: 0.01–10.00
+  let CHIP_VALUES = [1,5,25,100,500,1000]; // in cents: 0.01–10.00
   const STORAGE_KEYS = { seed:'roulette_server_seed', nonce:'roulette_nonce', client:'roulette_client_seed' };
   const WALLET_KEY = 'wallet.balance';
   function walletGet(){ try{ return Number(JSON.parse(localStorage.getItem(WALLET_KEY))||1000); }catch{ return 1000 } }
@@ -348,7 +348,7 @@
     tableEl.innerHTML = '';
     // Zero on the left spanning 3 rows
     const zero = makeCell('0','zero','straight-0', new Set([0]));
-    zero.title = 'Sázka: 0 (straight 35:1)';
+    zero.title = 'Bet: 0 (straight 35:1)';
     zero.style.gridColumn = '1';
     zero.style.gridRow = '1 / span 3';
     tableEl.appendChild(zero);
@@ -426,7 +426,7 @@
   // Custom chip add
   function addCustomChip(){
     const cents = toCents(chipCustomInput.value);
-    if(!cents || cents<=0){ showToast('Neplatná hodnota žetonu.'); return; }
+    if(!cents || cents<=0){ showToast('Invalid chip value.'); return; }
     if(!CHIP_VALUES.includes(cents)){
       CHIP_VALUES.push(cents);
       CHIP_VALUES = [...new Set(CHIP_VALUES)].filter(n=>Number.isFinite(n) && n>0);
@@ -469,7 +469,7 @@
     const def = keyToBet(key);
     if(!def) return;
     const cost = selectedChip;
-    if(balance < cost) return showToast('Nedostatečný zůstatek.');
+    if(balance < cost) return showToast('Insufficient balance.');
 
     balance -= cost; persistBalance();
     const cur = bets.get(key) || { ...def, stake:0 };
@@ -584,10 +584,10 @@
 
   function repeatBets(){
     if(spinning) return;
-    if(!lastRoundSnapshot || !lastRoundSnapshot.length) return showToast('Žádné předchozí sázky.');
+    if(!lastRoundSnapshot || !lastRoundSnapshot.length) return showToast('No previous bets.');
     // compute total cost
     let total=0; lastRoundSnapshot.forEach(([k,b])=> total+=b.stake);
-    if(balance<total) return showToast('Nedostatečný zůstatek pro Repeat.');
+    if(balance<total) return showToast('Insufficient balance for Repeat.');
     balance-=total; persistBalance();
     restoreBets(lastRoundSnapshot);
     updateBalanceUI();
@@ -596,8 +596,8 @@
   function doubleBets(){
     if(spinning) return;
     let total=0; for(const [k,b] of bets){ total+=b.stake; }
-    if(total===0) return showToast('Nejsou žádné sázky k zdvojnásobení.');
-    if(balance<total) return showToast('Nedostatečný zůstatek pro Double.');
+    if(total===0) return showToast('No bets to double.');
+    if(balance<total) return showToast('Insufficient balance for Double.');
     balance-=total; persistBalance();
     for(const [k,b] of bets){ b.stake*=2; const cell = document.querySelector(`.cell[data-key="${k}"]`); if(cell) renderCellChips(cell,b.stake); }
     updateBalanceUI();
@@ -744,7 +744,7 @@
 
   // ====== Spin flow ======
   async function doSpin(){
-    if(spinning) return; if(bets.size===0) return showToast('Nejdřív něco vsadit.');
+    if(spinning) return; if(bets.size===0) return showToast('Place a bet first.');
     spinning = true; lockUI(true);
     clearHighlights();
 
@@ -774,8 +774,8 @@
 
     // Settle
     const {win, lose, net} = settleBets(finalNumber);
-    if(net>=0) showToast(`Výsledek: ${finalNumber} ${RED.has(finalNumber)?'(Red)':'(Black/Green)'} · Výhra ${fmt(win)} (net ${fmt(net)})`);
-    else showToast(`Výsledek: ${finalNumber} ${RED.has(finalNumber)?'(Red)':'(Black/Green)'} · Prohra ${fmt(-net)}`);
+    if(net>=0) showToast(`Result: ${finalNumber} ${RED.has(finalNumber)?'(Red)':'(Black/Green)'} · Win ${fmt(win)} (net ${fmt(net)})`);
+    else showToast(`Result: ${finalNumber} ${RED.has(finalNumber)?'(Red)':'(Black/Green)'} · Loss ${fmt(-net)}`);
 
     if(pfEnable.checked){ nonce++; localStorage.setItem(STORAGE_KEYS.nonce, String(nonce)); nonceEl.textContent = String(nonce); }
 
@@ -824,7 +824,7 @@
   function lockUI(state){ btnSpin.disabled=state; mSpin.disabled=state; document.querySelectorAll('.cell').forEach(c=>c.disabled=state); }
 
   // ====== Seeds controls ======
-  function newServerSeed(){ serverSeed = crypto.getRandomValues(new Uint32Array(4)).join('-'); localStorage.setItem(STORAGE_KEYS.seed, serverSeed); nonce=0; localStorage.setItem(STORAGE_KEYS.nonce,'0'); nonceEl.textContent='0'; updateSeedHash(); showToast('Vygenerován nový server seed.'); }
+  function newServerSeed(){ serverSeed = crypto.getRandomValues(new Uint32Array(4)).join('-'); localStorage.setItem(STORAGE_KEYS.seed, serverSeed); nonce=0; localStorage.setItem(STORAGE_KEYS.nonce,'0'); nonceEl.textContent='0'; updateSeedHash(); showToast('New server seed generated.'); }
 
   // ====== Events ======
   btnSpin.addEventListener('click', doSpin); mSpin.addEventListener('click', doSpin);

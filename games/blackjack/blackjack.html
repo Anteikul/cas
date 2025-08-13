@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -43,7 +43,7 @@
     padding:10px 14px; border-radius:12px; border:1px solid var(--edge);
     background:linear-gradient(180deg, rgba(255,255,255,.06), transparent 50%), #152033;
     transition:transform .05s ease, filter .2s ease, background .2s ease, opacity .2s;
-    display:inline-flex; align-items:center; justify-content:center; /* proti svislému roztažení */
+    display:inline-flex; align-items:center; justify-content:center; /* prevent vertical stretching */
   }
   .btn:hover{ filter:brightness(1.1) }
   .btn:active{ transform:translateY(1px) }
@@ -93,14 +93,14 @@
   .zone{ padding:18px 0 }
   .zone+.zone{ border-top:1px dashed #22314f }
 
-  /* Dealer: skóre nad kartami (absolute) */
+  /* Dealer: score above cards (absolute) */
   .hand.dealer{ position:relative; padding:20px 0 }
   .hand.dealer .score{
     position:absolute; left:50%; transform:translateX(-50%); top:-12px;
     background:var(--chip); border:1px solid var(--edge); border-radius:10px; padding:6px 10px; font-weight:600;
   }
 
-  /* Hráč: karty vedle sebe, skóre POD kartami – statické */
+  /* Player: cards side by side, score BELOW cards – static */
   .player-hands{ display:grid; gap:16px }
   .hand.player{ position:relative; padding:12px 0 }
   .hand.player .score{
@@ -119,7 +119,7 @@
   .card{
     width:78px; height:114px; border-radius:10px; background:#e6ebf3;
     box-shadow:0 8px 20px rgba(0,0,0,.35); border:1px solid rgba(0,0,0,.15);
-    position:relative; transform:translateX(-80px); opacity:0; animation:flyin .6s ease forwards; /* pomalejší */
+    position:relative; transform:translateX(-80px); opacity:0; animation:flyin .6s ease forwards; /* slower */
   }
   @keyframes flyin{ to{ transform:translateX(0); opacity:1 } }
   .card .face{ position:absolute; inset:0; display:grid; place-items:center; font-weight:800; font-size:26px; color:#0c1524 }
@@ -137,7 +137,7 @@
   }
   .toast.show{ opacity:1; transform:translateY(0) }
 
-  /* Historie */
+  /* History */
   .history{ padding:12px }
   .history .item{
     padding:10px 12px; border:1px solid var(--edge); border-radius:10px; background:#0f1726;
@@ -151,7 +151,7 @@
     display:flex; gap:8px; padding:12px; border-top:1px solid var(--edge);
     background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 30%), var(--panel);
     border-radius:0 0 14px 14px;
-    align-items:center; /* proti svislému roztahování tlačítek */
+    align-items:center; /* prevent vertical stretching of buttons */
     flex-wrap:wrap;
   }
   .tag{ font-size:11px; color:#08111e; background:var(--gold); border-radius:999px; padding:2px 8px; font-weight:700 }
@@ -160,20 +160,20 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- LEVÝ PANEL: Balance & sázky -->
+    <!-- LEFT PANEL: Balance & Bets -->
     <aside class="panel" id="left">
-      <h2>Balance & sázka</h2>
+      <h2>Balance & Bet</h2>
       <div class="controls">
         <div class="lobby-row"><a class="lobby-btn" href="../../index.html">← Lobby</a></div>
         <div class="row">
           <div>
-            <div class="muted" style="font-size:12px">Zůstatek</div>
+            <div class="muted" style="font-size:12px">Balance</div>
             <div class="stat" id="balanceView" style="font-size:22px; font-weight:800">1 000.00</div>
           </div>
         </div>
         <div class="divider"></div>
         <div>
-          <div class="muted" style="font-size:12px">Sázka</div>
+          <div class="muted" style="font-size:12px">Bet</div>
           <div class="row"><input type="number" id="bet" min="1" step="1" value="10"></div>
           <div class="row">
             <button class="btn pill" data-betadd="10">+10</button>
@@ -187,16 +187,16 @@
         </div>
         <div class="divider"></div>
         <div class="row">
-          <button class="btn accent" id="dealBtn">Rozdat</button>
-          <button class="btn" id="newShoeBtn" title="Míchat 6 balíčků">Nový shoe</button>
+          <button class="btn accent" id="dealBtn">Deal</button>
+          <button class="btn" id="newShoeBtn" title="Shuffle 6 decks">New shoe</button>
         </div>
         <div class="muted" style="font-size:12px">
-          Pravidla: S17 • Blackjack 3:2 • Double po prvních 2 kartách • Split párů (10/J/Q/K lze) • Split A,A = 1 karta a stop • Bez pojištění.
+          Rules: S17 • Blackjack 3:2 • Double after first 2 cards • Split pairs (10/J/Q/K allowed) • Split A,A = 1 card then stand • No insurance.
         </div>
       </div>
     </aside>
 
-    <!-- STŮL -->
+    <!-- TABLE -->
     <main class="table panel">
       <div class="toast" id="toast"></div>
       <div class="felt" id="felt">
@@ -209,8 +209,8 @@
         </div>
 
         <div class="labels" style="margin-top:8px">
-          <div>Hráč</div>
-          <div class="muted stat" id="roundInfo">Shoe: 6×52 • Reshuffle pod 25 %</div>
+          <div>Player</div>
+          <div class="muted stat" id="roundInfo">Shoe: 6×52 • Reshuffle under 25%</div>
         </div>
 
         <div class="zone">
@@ -218,19 +218,19 @@
         </div>
       </div>
 
-      <!-- pořadí: Hit, Stand, Double, Split -->
+      <!-- order: Hit, Stand, Double, Split -->
       <div class="actionbar">
         <button class="btn good" id="hitBtn" disabled>Hit</button>
         <button class="btn bad" id="standBtn" disabled>Stand</button>
         <button class="btn accent" id="doubleBtn" disabled>Double</button>
         <button class="btn split" id="splitBtn" disabled>Split</button>
-        <div style="margin-left:auto" class="muted">Sázka: <span class="stat" id="betView">10</span></div>
+        <div style="margin-left:auto" class="muted">Bet: <span class="stat" id="betView">10</span></div>
       </div>
     </main>
 
-    <!-- PRAVÝ PANEL: Historie -->
+    <!-- RIGHT PANEL: History -->
     <aside class="panel">
-      <h2>Historie</h2>
+      <h2>History</h2>
       <div class="history" id="history"></div>
     </aside>
   </div>
@@ -238,7 +238,7 @@
 <script>
 (() => {
   // ---------- Utils ----------
-  const fmt = v => Number(v).toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmt = v => Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
   const rngInt = (n)=>{
     if (window.crypto && crypto.getRandomValues){
@@ -300,7 +300,7 @@
   function ensureShoe(){
     if (!state.shoe.length || state.shoe.length < state.shoeSize*state.penetrationCutoff){
       state.shoe = buildShoe(6);
-      showToast('Nový shoe (6×52) zamíchán.'); updateRoundInfo();
+      showToast('New shoe (6×52) shuffled.'); updateRoundInfo();
     }
   }
   function drawCard(){ ensureShoe(); return state.shoe.pop(); }
@@ -339,7 +339,7 @@
   function updateRoundInfo(){
     const left=state.shoe.length,total=state.shoeSize||312;
     const pct=Math.round((left/total)*100);
-    el.roundInfo.textContent=`Shoe: 6×52 • Zbývá ~${pct}% • Reshuffle pod ${Math.round(state.penetrationCutoff*100)}%`;
+    el.roundInfo.textContent=`Shoe: 6×52 • Remaining ~${pct}% • Reshuffle under ${Math.round(state.penetrationCutoff*100)}%`;
   }
   function renderBalance(){ walletSet(state.balance); el.balanceView.textContent=fmt(state.balance); }
   function syncBetUI(){ el.betView.textContent=fmt(state.baseBet); }
@@ -352,7 +352,7 @@
     wrap.dataset.handIndex=String(idx);
 
     const tag=document.createElement('div');
-    tag.className='bettag'; tag.textContent=`Sázka ${fmt(hand.bet)}`;
+    tag.className='bettag'; tag.textContent=`Bet ${fmt(hand.bet)}`;
     wrap.appendChild(tag);
 
     const cardsDiv=document.createElement('div'); cardsDiv.className='cards';
@@ -377,7 +377,7 @@
     const cardsDiv=wrap.querySelector('.cards');
     const have=Number(cardsDiv.dataset.cardsCount||0);
     for(let i=have;i<hand.cards.length;i++){
-      const delay=baseDelay + i*220; // pomalejší dávkování
+      const delay=baseDelay + i*220; // slower dealing
       cardsDiv.appendChild(cardEl(hand.cards[i],{delay}));
     }
     cardsDiv.dataset.cardsCount=String(hand.cards.length);
@@ -389,19 +389,19 @@
     });
   }
 
-  // Dealer – také append-only
+  // Dealer – append-only as well
   function dealerReset(showHole=false){
     el.dealer.innerHTML='';
-    // dvě karty přidáme s postupným zpožděním
+    // add two cards with sequential delay
     if (state.dealer[0]) el.dealer.appendChild(cardEl(state.dealer[0],{hidden:!showHole,delay:0}));
     if (state.dealer[1]) el.dealer.appendChild(cardEl(state.dealer[1],{hidden:false,delay:220}));
     el.dealerScore.textContent = showHole ? handValue(state.dealer) : (state.dealer.length ? '?' : '–');
   }
   function dealerRevealHole(){
-    // přepni první kartu z "back" na face
+    // flip first card from "back" to face
     const first=el.dealer.children[0];
     if (first){ first.classList.remove('back'); first.querySelector('.face')?.replaceChildren(); }
-    // přepiš celé, aby se doplnily symboly (jednodušeji překreslím první prvek):
+    // redraw entire first element to update symbols
     el.dealer.replaceChild(cardEl(state.dealer[0],{hidden:false,delay:0}), first);
     el.dealerScore.textContent = handValue(state.dealer);
   }
@@ -446,11 +446,11 @@
     const lh=document.createElement('div');
     const playerCards = state.playerHands[handIdx].cards;
     lh.innerHTML=`<div class="muted" style="font-size:12px">${result} (Hand ${handIdx+1})</div>
-                  <div>Hráč ${handValue(playerCards)} vs Dealer ${handValue(state.dealer)}</div>`;
+                  <div>Player ${handValue(playerCards)} vs Dealer ${handValue(state.dealer)}</div>`;
     const rh=document.createElement('div');
     const cls = profit>0?'win':(profit<0?'lose':'push');
     const bet = state.playerHands[handIdx].bet;
-    rh.innerHTML=`<div class="muted" style="font-size:12px">Sázka ${fmt(bet)}</div>
+    rh.innerHTML=`<div class="muted" style="font-size:12px">Bet ${fmt(bet)}</div>
                   <div class="delta ${cls}">${profit>0?'+':''}${fmt(profit)}</div>`;
     item.appendChild(lh); item.appendChild(rh); document.getElementById('history').prepend(item);
     const hist=document.getElementById('history');
@@ -461,8 +461,8 @@
   function startRound(){
     const bet = clamp(Math.floor(Number(el.betInput?.value ?? state.baseBet)),1,Math.floor(state.balance));
     state.baseBet = bet; syncBetUI();
-    if (bet<1){ showToast('Sázka je příliš nízká.'); return; }
-    if (bet>state.balance){ showToast('Nedostatek prostředků.'); return; }
+    if (bet<1){ showToast('Bet is too low.'); return; }
+    if (bet>state.balance){ showToast('Insufficient funds.'); return; }
 
     state.inRound = true;
     state.dealer = [];
@@ -472,20 +472,20 @@
 
     clearTable();
 
-    // Deal: P, D(hole), P, D(up) – pomalejší dávky
+    // Deal: P, D(hole), P, D(up) – slower rounds
     const p1=drawCard(), d1=drawCard(), p2=drawCard(), d2=drawCard();
     state.playerHands[0].cards.push(p1);
-    createPlayerHandDom(0); // vytvoří DOM a přidá 1. kartu
+    createPlayerHandDom(0); // create DOM and add first card
     setTimeout(()=>{
       state.dealer.push(d1);
-      dealerReset(false); // založí dealerovy karty (první schovaná)
+      dealerReset(false); // set up dealer cards (first hidden)
       setActions();
       setTimeout(()=>{
         state.playerHands[0].cards.push(p2);
         appendMissingCards(0, 0);
         setTimeout(()=>{
           state.dealer.push(d2);
-          dealerReset(false); // přidá druhou odkrytou
+          dealerReset(false); // add second face-up
           setActions();
           // Natural check
           setTimeout(()=>{
@@ -495,15 +495,15 @@
               dealerRevealHole();
               if (pBJ && dBJ){
                 state.balance += state.baseBet;
-                addHistoryLine('Push – oba blackjack', 0, 0);
-                showToast('Push – oba blackjack');
+                addHistoryLine('Push – both blackjack', 0, 0);
+                showToast('Push – both blackjack');
               } else if (pBJ){
                 const win = state.baseBet * 1.5;
                 state.balance += state.baseBet + win;
-                addHistoryLine('Výhra – Blackjack 3:2', +win, 0);
+                addHistoryLine('Win – Blackjack 3:2', +win, 0);
                 showToast('Blackjack! 3:2');
               } else {
-                addHistoryLine('Prohra – Dealer blackjack', -state.baseBet, 0);
+                addHistoryLine('Loss – Dealer blackjack', -state.baseBet, 0);
                 showToast('Dealer blackjack');
               }
               renderBalance();
@@ -540,12 +540,12 @@
   function doDouble(){
     const h = state.playerHands[state.activeHand];
     if (!state.inRound || !h || h.isDone || !h.canDouble || h.isSplitAces) return;
-    if (state.balance < h.bet){ showToast('Nedostatek prostředků pro Double.'); return; }
+    if (state.balance < h.bet){ showToast('Insufficient funds for Double.'); return; }
     state.balance -= h.bet; h.bet *= 2; h.canDouble=false; renderBalance();
 
     const c = drawCard(); h.cards.push(c);
     appendMissingCards(state.activeHand, 0);
-    h.isDone = true; // po double se stojí
+    h.isDone = true; // stand after double
     nextHandOrDealer();
   }
 
@@ -553,7 +553,7 @@
     const h = state.playerHands[state.activeHand];
     if (!state.inRound || !h || h.isDone || h.cards.length!==2) return;
     if (!canSplitNow(h)) return;
-    if (state.balance < h.bet){ showToast('Nedostatek prostředků pro Split.'); return; }
+    if (state.balance < h.bet){ showToast('Insufficient funds for Split.'); return; }
 
     const [c1, c2] = h.cards;
     const bet2 = h.bet;
@@ -561,24 +561,24 @@
 
     const splitAces = (c1.r==='A' && c2.r==='A');
 
-    // Připrav dvě ruce
+    // Prepare two hands
     h.cards = [c1]; h.canDouble = true; h.isDone = false; h.isSplitAces = splitAces;
     const newHand = { cards:[c2], bet:bet2, canDouble:true, isDone:false, isSplitAces:splitAces };
     state.playerHands.splice(state.activeHand+1, 0, newHand);
 
-    // Překresli pouze strukturu kontejneru rukou (bez mazání karet)
+    // Redraw only hand container structure (without removing cards)
     el.playerHands.innerHTML='';
     createPlayerHandDom(0);
     for(let i=1;i<state.playerHands.length;i++) createPlayerHandDom(i);
 
-    // Každé ruce rozdej 1 kartu (append-only)
+    // Deal 1 card to each hand (append-only)
     setTimeout(()=>{
       h.cards.push(drawCard()); appendMissingCards(state.activeHand, 0);
       newHand.cards.push(drawCard()); appendMissingCards(state.activeHand+1, 0);
 
       if (splitAces){
         h.isDone = true; newHand.isDone = true;
-        showToast('Split A,A – každá ruka 1 karta a stop');
+        showToast('Split A,A – each hand 1 card then stand');
         nextHandOrDealer();
       } else {
         setActions();
@@ -587,7 +587,7 @@
   }
 
   function nextHandOrDealer(){
-    // najdi další nedohranou ruku
+    // find next unfinished hand
     for (let i=0;i<state.playerHands.length;i++){
       const idx = (state.activeHand + 1 + i) % state.playerHands.length;
       if (!state.playerHands[idx].isDone){
@@ -603,7 +603,7 @@
       const v=handValue(state.dealer);
       if (v<17){
         state.dealer.push(drawCard()); dealerAppendNew();
-        setTimeout(step, 420); // pomalejší dohrávání dealera
+        setTimeout(step, 420); // slower dealer play
       }else{
         settleAll();
       }
@@ -616,15 +616,15 @@
     state.playerHands.forEach((h,idx)=>{
       const p = handValue(h.cards);
       let result='', profit=0;
-      if (p>21){ result='Prohra – Bust'; profit=-h.bet; }
-      else if (d>21){ result='Výhra – Dealer bust'; profit= h.bet; state.balance += h.bet*2; }
-      else if (p>d){ result='Výhra'; profit= h.bet; state.balance += h.bet*2; }
-      else if (p<d){ result='Prohra'; profit=-h.bet; }
+      if (p>21){ result='Loss – Bust'; profit=-h.bet; }
+      else if (d>21){ result='Win – Dealer bust'; profit= h.bet; state.balance += h.bet*2; }
+      else if (p>d){ result='Win'; profit= h.bet; state.balance += h.bet*2; }
+      else if (p<d){ result='Loss'; profit=-h.bet; }
       else { result='Push'; profit=0; state.balance += h.bet; }
       addHistoryLine(result, profit, idx);
     });
     renderBalance();
-    showToast('Konec kola');
+    showToast('Round over');
     endRound();
   }
 
@@ -639,9 +639,9 @@
   el.standBtn.addEventListener('click', doStand);
   el.doubleBtn.addEventListener('click', doDouble);
   el.splitBtn.addEventListener('click', doSplit);
-  el.newShoeBtn.addEventListener('click', ()=>{ state.shoe=[]; ensureShoe(); showToast('Shoe zamíchán.'); });
+  el.newShoeBtn.addEventListener('click', ()=>{ state.shoe=[]; ensureShoe(); showToast('Shoe shuffled.'); });
 
-  // Sázkové helpery
+  // Bet helpers
   document.querySelectorAll('[data-betadd]').forEach(b=>{
     b.addEventListener('click', ()=>{
       const add=Number(b.getAttribute('data-betadd'));
@@ -667,9 +667,9 @@
   el.betInput.addEventListener('change', ()=>{ state.baseBet = clamp(Math.floor(el.betInput.value),1,Math.floor(state.balance||1)); syncBetUI(); });
 
   // Init
-  ensureShoe(); renderBalance(); syncBetUI(); clearTable(); setActions(); // tlačítka nejsou roztažená
+  ensureShoe(); renderBalance(); syncBetUI(); clearTable(); setActions(); // buttons not stretched
 
-  // Klávesové zkratky
+  // Keyboard shortcuts
   window.addEventListener('keydown', (e)=>{
     if (e.key.toLowerCase()==='h') el.hitBtn.click();
     if (e.key.toLowerCase()==='s') el.standBtn.click();
