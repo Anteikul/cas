@@ -7,82 +7,110 @@
 <link rel="stylesheet" href="../../css/game-theme.css">
 <style>
   :root{
-    --bg:#05070c; --panel:#0f1421; --edge:rgba(255,255,255,.1); --muted:#8ea2ba; --text:#e8f0ff;
-    --accent:#5cf0b7; --good:#6ae3a2; --bad:#ff6b6b; --chip:#0c121d; --gold:#f6c356;
+    --bg:#030610;
+    --bg-2:#070d1b;
+    --panel:#0b1224;
+    --panel-strong:#0f1a33;
+    --edge:rgba(255,255,255,.09);
+    --muted:#95a8c6;
+    --text:#e9f1ff;
+    --accent:#6af7c6;
+    --accent-2:#7cb3ff;
+    --good:#89f7b4;
+    --bad:#ff7b7b;
+    --chip:#0e172e;
+    --gold:#ffc857;
+    --frost:#1a2644;
   }
   html,body{height:100%}
   body{margin:0;background:
-      radial-gradient(1200px 800px at 10% -10%, rgba(122,213,255,.08) 0%, transparent 50%),
-      radial-gradient(900px 700px at 120% 20%, rgba(92,240,183,.08) 0%, transparent 50%),
-      linear-gradient(180deg,#05070c 0%,#070a11 100%);
-       color:var(--text); font:14px/1.35 system-ui, Segoe UI, Roboto, Inter, sans-serif}
+      radial-gradient(1200px 900px at 10% -5%, rgba(108,193,255,.16) 0%, transparent 45%),
+      radial-gradient(900px 700px at 90% 10%, rgba(88,248,196,.12) 0%, transparent 50%),
+      linear-gradient(160deg,#050816 0%,#05060f 30%,#050915 60%,#031021 100%);
+       color:var(--text); font:14px/1.35 "Inter", "Segoe UI", system-ui, sans-serif; letter-spacing:0.1px}
   *{box-sizing:border-box}
   button{cursor:pointer}
   /* Layout */
-  .wrap{display:grid; grid-template-columns:340px 1fr 320px; gap:16px; padding:16px}
+  .wrap{display:grid; grid-template-columns:360px 1fr 320px; gap:16px; padding:16px; position:relative}
   @media (max-width:1100px){.wrap{grid-template-columns:1fr; padding-bottom:86px}}
 
+  .hero{padding:18px 16px 4px; display:grid; gap:10px}
+  .hero-card{display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center; padding:16px; border:1px solid var(--edge);
+    border-radius:18px; background:linear-gradient(120deg, rgba(106,247,198,.12), rgba(124,179,255,.09)); box-shadow:0 18px 40px rgba(0,0,0,.32)}
+  .eyebrow{margin:0; color:var(--muted); text-transform:uppercase; letter-spacing:2px; font-size:11px; font-weight:800}
+  .hero h1{margin:2px 0 6px; font-size:26px; letter-spacing:0.4px}
+  .hero p{margin:0; color:var(--muted)}
+  .hero-actions{display:flex; gap:10px; flex-wrap:wrap}
+  .btn-primary{padding:11px 14px; border-radius:12px; border:1px solid transparent; background:linear-gradient(120deg,#6af7c6,#7cb3ff); color:#05101c; font-weight:800; box-shadow:0 12px 28px rgba(106,247,198,.28);}
+  .btn-ghost{padding:11px 14px; border-radius:12px; border:1px solid var(--edge); background:rgba(255,255,255,.05); color:var(--text); font-weight:700}
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px}
+  .stat{padding:10px 12px; border-radius:14px; border:1px solid var(--edge); background:linear-gradient(180deg,#0d172f,#0a1124); display:grid; gap:2px}
+  .stat label{font-size:11px; color:var(--muted); letter-spacing:.2px}
+  .stat strong{font-size:16px}
+
   header.appbar{position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:12px;
-    padding:10px 16px; background:linear-gradient(#0d141f, #0b0f14); border-bottom:1px solid var(--edge);}
+    padding:12px 16px; background:linear-gradient(120deg, rgba(14,24,44,.85), rgba(9,17,34,.92)); border-bottom:1px solid var(--edge); box-shadow:0 8px 24px rgba(0,0,0,.32); backdrop-filter:blur(10px);}
   .lobby-btn{
-    display:inline-flex; align-items:center; gap:6px;
-    padding:10px 12px;
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 14px;
     border:1px solid var(--edge);
-    border-radius:12px;
-    background:transparent;
+    border-radius:14px;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.01));
     color:var(--text);
     text-decoration:none;
-    font-weight:600;
+    font-weight:700;
     cursor:pointer;
+    box-shadow:0 10px 24px rgba(0,0,0,.3);
   }
-  .lobby-btn:hover{ background:rgba(255,255,255,.04); }
-  .balance-pill{margin-left:auto; display:flex; align-items:center; gap:8px; padding:6px 10px; background:#0f1625; border:1px solid var(--edge); border-radius:999px}
-  .balance-pill input{width:120px; background:transparent; border:none; color:var(--text); font-weight:700}
+  .lobby-btn:hover{ background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.03)); }
+  .balance-pill{margin-left:auto; display:flex; align-items:center; gap:10px; padding:8px 12px; background:linear-gradient(135deg,#0d1a32,#0b1224); border:1px solid var(--edge); border-radius:999px; box-shadow:0 12px 32px rgba(0,0,0,.35)}
+  .balance-pill strong{font-size:13px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase}
+  .balance-pill input{width:140px; background:transparent; border:none; color:var(--text); font-weight:800; font-size:16px}
 
-  .panel{background:linear-gradient(180deg, #0f1626, #0b0f14); border:1px solid var(--edge); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
-  .panel h3{margin:0; padding:10px 12px; font-size:13px; letter-spacing:.2px; color:var(--muted); border-bottom:1px solid var(--edge)}
+  .panel{background:linear-gradient(180deg, #0c152c, #0a1020 60%, #0a0f1f); border:1px solid var(--edge); border-radius:18px; box-shadow:0 12px 36px rgba(0,0,0,.38); overflow:hidden}
+  .panel h3{margin:0; padding:12px 14px; font-size:12px; letter-spacing:.3px; color:var(--muted); text-transform:uppercase; border-bottom:1px solid var(--edge); background:linear-gradient(90deg, rgba(106,247,198,.05), rgba(124,179,255,.05));}
 
   /* Left: Wheel */
-  .wheel-panel{padding:12px; display:grid; gap:12px; align-content:start}
-  .wheel-box{aspect-ratio:1/1; background:radial-gradient(circle at 50% 40%, #0e1524, #0b0f14 70%);
-    border:1px solid var(--edge); border-radius:16px; display:grid; place-items:center; position:relative; overflow:hidden}
+  .wheel-panel{padding:14px; display:grid; gap:12px; align-content:start; background:linear-gradient(180deg,#0d182f,#0a1124)}
+  .wheel-box{aspect-ratio:1/1; background:radial-gradient(circle at 50% 40%, #0e172e, #0a0f1f 70%);
+    border:1px solid var(--edge); border-radius:18px; display:grid; place-items:center; position:relative; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(255,255,255,.04), 0 16px 40px rgba(0,0,0,.42)}
   svg#wheel{width:100%; height:100%;}
   .status{display:flex; justify-content:space-between; gap:8px}
-  .status .pill{padding:6px 10px; background:#0f1626; border:1px solid var(--edge); border-radius:999px; color:var(--muted)}
+  .status .pill{padding:6px 10px; background:rgba(255,255,255,.03); border:1px solid var(--edge); border-radius:999px; color:var(--muted)}
 
   /* Center: Betting table */
-  .table-panel{padding:12px; display:grid; gap:12px}
+  .table-panel{padding:14px; display:grid; gap:12px; background:linear-gradient(180deg,#0d182f,#0a1124)}
   .betting-grid{display:grid; grid-template-columns:60px repeat(12, 1fr) 60px; gap:6px; grid-auto-rows:48px}
-  .cell{position:relative; user-select:none; display:grid; place-items:center; padding:10px 0; border-radius:10px;
-    background:linear-gradient(180deg,#0e1626,#0b101a); border:1px solid #1a263a; color:var(--text)}
-  .cell.zero{grid-row:1 / span 3; grid-column:1; writing-mode:vertical-rl; text-orientation:mixed; font-weight:700; background:linear-gradient(180deg,#0f6b3e,#0a3a24); border-color:#0d5a35}
-  .cell.number.red{background:linear-gradient(180deg,#3a0e16,#200b0e); border-color:#4a1420}
-  .cell.number.black{background:linear-gradient(180deg,#0d1016,#07090f); border-color:#1c2435}
-  .cell.outside{font-weight:700}
+  .cell{position:relative; user-select:none; display:grid; place-items:center; padding:10px 0; border-radius:12px;
+    background:linear-gradient(180deg,#0f1c36,#0b1224); border:1px solid #1f2f4a; color:var(--text); box-shadow:0 8px 20px rgba(0,0,0,.35)}
+  .cell.zero{grid-row:1 / span 3; grid-column:1; writing-mode:vertical-rl; text-orientation:mixed; font-weight:800; background:linear-gradient(180deg,#0f6b3e,#0a3a24); border-color:#0d5a35; letter-spacing:1px}
+  .cell.number.red{background:linear-gradient(180deg,#4c1325,#2a0f18); border-color:#7a1c2b}
+  .cell.number.black{background:linear-gradient(180deg,#0f131c,#090c14); border-color:#1f2635}
+  .cell.outside{font-weight:800; background:linear-gradient(180deg,#0f1c36,#0b1325)}
   .cell:focus-visible{outline:2px solid var(--accent)}
   .cell .chipstack{position:absolute; inset:auto auto 6px 6px; display:flex; gap:2px; flex-wrap:wrap; max-width:80%}
-  .chip{width:22px; height:22px; display:grid; place-items:center; border-radius:99px; border:2px solid rgba(255,255,255,.25);
-        background:var(--chip); font-size:11px; font-weight:800}
+  .chip{width:24px; height:24px; display:grid; place-items:center; border-radius:99px; border:2px solid rgba(255,255,255,.25);
+        background:linear-gradient(180deg,#15264a,#0f1b35); font-size:11px; font-weight:800; color:var(--accent)}
 
-  .controls{display:grid; gap:10px}
+  .controls{display:grid; gap:10px; padding:12px; border:1px solid var(--edge); border-radius:14px; background:linear-gradient(180deg,#0d182f,#0a1124)}
   .chip-row{display:flex; flex-wrap:wrap; gap:8px}
-  .chip-btn{padding:10px 12px; border-radius:12px; border:1px solid var(--edge); background:#0c1220; font-weight:800; color:var(--text)}
-  .chip-btn.active{outline:2px solid var(--accent)}
+  .chip-btn{padding:10px 12px; border-radius:12px; border:1px solid var(--edge); background:linear-gradient(180deg,#101c36,#0c1428); font-weight:800; color:var(--text); box-shadow:0 10px 20px rgba(0,0,0,.28)}
+  .chip-btn.active{outline:2px solid var(--accent); box-shadow:0 0 0 3px rgba(106,247,198,.16)}
   .action-row{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
-  .action-row button, .spin-row button{padding:10px 12px; border-radius:12px; border:1px solid var(--edge); background:#0c1220; font-weight:700; color:var(--text)}
+  .action-row button, .spin-row button{padding:12px; border-radius:12px; border:1px solid var(--edge); background:linear-gradient(180deg,#0f1c36,#0c152b); font-weight:800; color:var(--text); letter-spacing:.2px}
   .spin-row{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center}
-  .spin-btn{background:linear-gradient(180deg, #1e7a48, #135735); border-color:#1e7a48; color:#eafff5}
+  .spin-btn{background:linear-gradient(120deg, #2b9e64, #1a6f46); border-color:#2b9e64; color:#eafff5; text-transform:uppercase; letter-spacing:.5px}
   .spin-btn[disabled]{opacity:.6; cursor:not-allowed}
 
   /* Right: History */
-  .history-panel{padding:12px; display:flex; flex-direction:column; gap:12px}
-  .history-list{display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; padding-right:6px}
-  .hist-item{display:flex; align-items:center; gap:8px; padding:8px; background:#0e1524; border:1px solid var(--edge); border-radius:12px}
+  .history-panel{padding:14px; display:flex; flex-direction:column; gap:12px; background:linear-gradient(180deg,#0d182f,#0a1124)}
+  .history-list{display:flex; flex-direction:column; gap:8px; max-height:240px; overflow-y:auto; padding-right:6px}
+  .hist-item{display:flex; align-items:center; gap:10px; padding:10px; background:linear-gradient(180deg,#0f1c36,#0b1325); border:1px solid var(--edge); border-radius:14px; box-shadow:0 8px 20px rgba(0,0,0,.28)}
   .ball{width:18px; height:18px; border-radius:99px; background:#d9e7ff; box-shadow:0 0 10px rgba(255,255,255,.6)}
-  .badge{padding:2px 8px; border-radius:999px; background:#0f1626; border:1px solid var(--edge); color:var(--muted); font-weight:700}
+  .badge{padding:4px 10px; border-radius:999px; background:linear-gradient(180deg,#0d172f,#0b1325); border:1px solid var(--edge); color:var(--muted); font-weight:800; letter-spacing:.3px}
 
-  .info-box{color:var(--muted); font-size:12px; display:grid; gap:6px}
-  .info-box code{word-break:break-word}
+  .info-box{color:var(--muted); font-size:12px; display:grid; gap:8px; padding:10px; border:1px solid var(--edge); border-radius:12px; background:rgba(255,255,255,.03)}
+  .info-box code{word-break:break-word; color:var(--text)}
 
   .warning-banner{
     display:flex;
@@ -90,7 +118,7 @@
     justify-content:center;
     gap:10px;
     padding:14px 16px;
-    background:linear-gradient(90deg, rgba(255,210,102,.18), rgba(255,107,107,.18));
+    background:linear-gradient(90deg, rgba(255,210,102,.16), rgba(255,107,107,.18));
     color:#ffe9c7;
     font-weight:900;
     font-size:16px;
@@ -101,13 +129,13 @@
   }
 
   /* Highlights */
-  .cell.win{outline:2px solid #5aa7ff; box-shadow:0 0 0 2px rgba(90,167,255,.35) inset, 0 0 12px rgba(90,167,255,.35);}
-  .cell.rowglow{box-shadow:inset 0 0 0 2px rgba(90,167,255,.15); filter:brightness(1.08);}
-  .cell.colglow{box-shadow:inset 0 0 0 2px rgba(90,167,255,.15); filter:brightness(1.08);}  
+  .cell.win{outline:2px solid var(--accent-2); box-shadow:0 0 0 2px rgba(124,179,255,.35) inset, 0 0 12px rgba(124,179,255,.35);}
+  .cell.rowglow{box-shadow:inset 0 0 0 2px rgba(106,247,198,.18); filter:brightness(1.08);}
+  .cell.colglow{box-shadow:inset 0 0 0 2px rgba(106,247,198,.18); filter:brightness(1.08);}
 
   /* Toast */
-  .toast{position:fixed; left:50%; bottom:16px; transform:translateX(-50%); background:#0e1524; border:1px solid var(--edge);
-         padding:10px 12px; border-radius:12px; color:var(--text); box-shadow:0 10px 30px rgba(0,0,0,.35); display:none}
+  .toast{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:linear-gradient(180deg,#0f1c36,#0b1325); border:1px solid var(--edge);
+         padding:12px 14px; border-radius:14px; color:var(--text); box-shadow:0 12px 32px rgba(0,0,0,.4); display:none}
   .toast.show{display:block}
 
   /* Mobile toolbar */
@@ -141,6 +169,25 @@
       <input id="balance" type="text" inputmode="decimal" aria-label="Balance" />
     </div>
   </header>
+
+  <section class="hero" aria-label="Roulette Night header">
+    <div class="hero-card">
+      <div>
+        <p class="eyebrow">EU Single-zero</p>
+        <h1>Roulette Night</h1>
+        <p>Shadowed neon table, crisp high-contrast chips, and a clear call to spin.</p>
+        <div class="hero-actions">
+          <button class="btn-primary" id="hero-spin">Quick Spin</button>
+          <button class="btn-ghost" id="hero-clear">Clear Board</button>
+        </div>
+      </div>
+      <div class="stat-grid" aria-label="Session stats">
+        <div class="stat"><label>Streak</label><strong id="stat-streak">0</strong></div>
+        <div class="stat"><label>Last hit</label><strong id="stat-last">—</strong></div>
+        <div class="stat"><label>Bankroll</label><strong id="stat-bank">0.00</strong></div>
+      </div>
+    </div>
+  </section>
 
   <main class="wrap">
     <!-- LEFT: WHEEL -->
@@ -246,6 +293,8 @@
   let redoStack = [];
   let lastRoundSnapshot = null;
   let spinning = false;
+  let streak = 0;
+  let lastNumber = null;
 
   // ====== DOM refs ======
   const balanceInput = document.getElementById('balance');
@@ -268,6 +317,11 @@
   const chipCustomInput = document.getElementById('chip-custom-value');
   const chipAddBtn = document.getElementById('chip-add-btn');
   const mClear = document.getElementById('m-clear');
+  const heroSpin = document.getElementById('hero-spin');
+  const heroClear = document.getElementById('hero-clear');
+  const statStreak = document.getElementById('stat-streak');
+  const statLast = document.getElementById('stat-last');
+  const statBank = document.getElementById('stat-bank');
 
   // ====== Wheel rendering ======
   const wheelSVG = document.getElementById('wheel');
@@ -758,6 +812,7 @@
 
 
     spinning = false; lockUI(false);
+    updateStats(finalNumber, net);
     addHistoryItem(finalNumber, win, lose, net);
   }
 
@@ -796,8 +851,21 @@
   }
 
   // ====== UI helpers ======
-  function updateBalanceUI(){ balanceInput.value = fmt(balance); }
+  function updateBalanceUI(){
+    balanceInput.value = fmt(balance);
+    if(statBank) statBank.textContent = fmt(balance);
+  }
   function persistBalance(){ walletSet(balance/100); }
+  function updateStats(hit, net){
+    if(typeof hit === 'number'){ lastNumber = hit; statLast.textContent = hit; }
+    else if(hit === null){ statLast.textContent = '—'; }
+    if(typeof net === 'number'){
+      if(net>0) streak++;
+      else if(net<0) streak = 0;
+    }
+    if(statStreak) statStreak.textContent = streak;
+    if(statBank) statBank.textContent = fmt(balance);
+  }
   function showToast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); clearTimeout(showToast._t); showToast._t=setTimeout(()=>toastEl.classList.remove('show'), 2600); }
   function lockUI(state){ btnSpin.disabled=state; mSpin.disabled=state; document.querySelectorAll('.cell').forEach(c=>c.disabled=state); }
 
@@ -810,6 +878,8 @@
   chipAddBtn.addEventListener('click', addCustomChip);
   chipCustomInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ addCustomChip(); }});
   mClear.addEventListener('click', clearAllBets);
+  heroSpin.addEventListener('click', ()=>btnSpin.click());
+  heroClear.addEventListener('click', clearAllBets);
 
   balanceInput.addEventListener('change', ()=>{ const c=toCents(balanceInput.value); if(!isNaN(c)){ balance=c; persistBalance(); updateBalanceUI(); }});
   // ====== Init ======
@@ -817,6 +887,7 @@
   renderTable();
   renderChips();
   updateBalanceUI();
+  updateStats(null, 0);
   setBallPos(0); // initial ball under pointer
 
   // ====== Lightweight self-tests (no side effects to balance) ======
