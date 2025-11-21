@@ -4,74 +4,38 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Dice – Line Roll (working, PF, tip marker)</title>
+<link rel="stylesheet" href="../../css/game-theme.css">
 <style>
   :root{
-    --bg:#0b1018; --bg2:#0a0f17; --edge:#1a2843;
-    --text:#e9f3ff; --muted:#9fb4d0; --accent:#67a8ff; --accent2:#70c1ff;
-    --good:#3ae08f; --good-ink:#001a0e; --bad:#ff6d6d; --gold:#ffd266;
+    --bg:#0b0f14; --bg2:#0b0f14; --edge:#1c2940;
+    --text:#e7f1fb; --muted:#9bb0c9; --accent:#5aa7ff; --accent2:#5aa7ff;
+    --good:#35d18a; --good-ink:#062016; --bad:#ff6b6b; --gold:#ffd266;
   }
-  html,body{height:100%}
-  body{
-    margin:0; color:var(--text);
-    font:14px/1.45 system-ui,Segoe UI,Roboto,Inter,sans-serif;
-    background:
-      radial-gradient(1200px 600px at 50% -10%, #16243b 0%, transparent 50%),
-      linear-gradient(180deg, var(--bg), var(--bg2));
-  }
-  *{box-sizing:border-box}
+  /* Base styling is handled by the shared game theme */
 
   /* Top bar */
-  .topbar{
-    position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:12px;
-    padding:12px 16px; background:linear-gradient(180deg, rgba(13,22,37,.9), rgba(10,16,26,.85));
-    border-bottom:1px solid var(--edge); backdrop-filter: blur(6px);
-  }
-  .brand{font-weight:700}
-  .pill{display:inline-flex;align-items:center;gap:8px;background:#0d1729;border:1px solid var(--edge);border-radius:999px;padding:6px 10px}
-  .balanceBox{position:relative;margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#0d1729;border:1px solid var(--edge);border-radius:999px}
+  .topbar{display:flex; align-items:center; gap:12px; padding:0 0 8px; border-bottom:1px solid var(--edge); margin-bottom:8px}
+  .brand{font-weight:800; color:var(--muted)}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--edge);border-radius:999px;padding:6px 10px}
+  .balanceBox{position:relative;display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--chip);border:1px solid var(--edge);border-radius:999px}
   .creditFloat{
     position:absolute; right:12px; top:-4px; font-weight:700; pointer-events:none; opacity:0; transform:translateY(0);
-    background:rgba(58,224,143,.12); border:1px solid rgba(58,224,143,.4); padding:4px 8px; border-radius:8px; color:var(--good);
+    background:rgba(53,209,138,.12); border:1px solid rgba(53,209,138,.4); padding:4px 8px; border-radius:8px; color:var(--good);
     animation: creditRise .9s ease-out forwards;
   }
   @keyframes creditRise{0%{opacity:0;transform:translateY(8px)}15%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
   .balancePulse{ animation: pulseGreen .7s ease-out 1 }
   @keyframes pulseGreen{0%{box-shadow:0 0 0 0 rgba(58,224,143,0)}30%{box-shadow:0 0 0 6px rgba(58,224,143,.18)}100%{box-shadow:0 0 0 0 rgba(58,224,143,0)}}
 
-  .wrap{display:grid; grid-template-columns:340px 1fr; gap:16px; padding:16px}
-  @media (max-width:1000px){ .wrap{grid-template-columns:1fr} }
-  .card{background:linear-gradient(180deg, rgba(20,31,53,.88), rgba(14,21,34,.95)); border:1px solid var(--edge); border-radius:14px; overflow:hidden}
-  .card h2{margin:0;padding:12px 14px;border-bottom:1px solid var(--edge);font-size:16px;background:linear-gradient(180deg,#122039,#0f1b33)}
+  .wrap{display:grid; grid-template-columns:320px 1fr; gap:16px; padding:16px}
+  @media (max-width:1100px){ .wrap{grid-template-columns:1fr} }
+  .card{background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 30%), var(--panel); border:1px solid var(--edge); border-radius:14px; overflow:hidden; box-shadow:var(--shadow)}
+  .card h2{margin:0;padding:12px 14px;border-bottom:1px solid var(--edge);font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 40%)}
   .section{padding:14px}
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .col{display:flex;flex-direction:column;gap:6px}
   .muted{color:var(--muted)}
-  .warning-banner{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:10px;
-    padding:14px 16px;
-    background:linear-gradient(90deg, rgba(255,210,102,.18), rgba(255,107,107,.18));
-    color:#ffe9c7;
-    font-weight:900;
-    font-size:16px;
-    letter-spacing:.2px;
-    text-align:center;
-    border-bottom:1px solid rgba(255,210,102,.6);
-    box-shadow:0 8px 18px rgba(0,0,0,.35);
-  }
-  .btn{background:#11223b;border:1px solid #1e3356;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;transition:transform .06s ease, background .15s, border-color .15s}
-  .btn:hover{background:#142a48;border-color:#284a7f}
-  .btn:active{transform:translateY(1px)}
-  .btn.primary{background:linear-gradient(180deg,var(--accent2),var(--accent));border-color:#86c4ff;color:#072142;font-weight:700}
-  .btn.good{background:linear-gradient(180deg,#61f0b2,var(--good));border-color:#8af5c8;color:var(--good-ink);font-weight:700}
-  .btn.bad{background:linear-gradient(180deg,#ff9696,var(--bad));border-color:#ffb3b3;color:#2a0000;font-weight:700}
-  .btn.ghost{background:transparent;border-color:var(--edge)}
-  input[type="number"], input[type="text"], select{
-    background:#0d1729;border:1px solid var(--edge);color:var(--text);
-    border-radius:10px;padding:12px;min-width:0
-  }
+  /* Buttons and inputs follow the shared game theme */
   input.full{width:100%}
 
   .toggles{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--edge);border-radius:12px;overflow:hidden}
