@@ -58,7 +58,21 @@
   .stat{ font-variant-numeric:tabular-nums; }
   .muted{ color:var(--muted) }
 
-  .disclaimer{ margin:0 16px 16px 16px; font-size:12px; color:var(--muted); border-left:3px solid var(--gold); padding-left:10px }
+  .warning-banner{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:14px 16px;
+    background:linear-gradient(90deg, rgba(255,210,102,.18), rgba(255,107,107,.18));
+    color:#ffe9c7;
+    font-weight:900;
+    font-size:16px;
+    letter-spacing:.2px;
+    text-align:center;
+    border-bottom:1px solid rgba(255,210,102,.6);
+    box-shadow:0 8px 18px rgba(0,0,0,.35);
+  }
 
   /* --- Unified Lobby button --- */
   .lobby-row{ margin-bottom:8px }
@@ -162,6 +176,7 @@
 </style>
 </head>
 <body>
+  <div class="warning-banner"><span aria-hidden="true">⚠️</span><span>For educational purposes only. No real money in use.</span></div>
   <div class="wrap">
     <!-- LEFT PANEL: Balance & Bets -->
     <aside class="panel" id="left">

@@ -15,7 +15,21 @@
   #plinko-game .row{ display:flex; align-items:center; gap:10px }
   #plinko-game .space{ justify-content:space-between }
   #plinko-game .tag{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; border:1px solid var(--edge); background:rgba(255,255,255,.04); font-size:12px }
-  #plinko-game .disclaimer{ margin:16px; font-size:12px; color:var(--muted); border-left:3px solid var(--accent); padding-left:10px }
+  .warning-banner{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:14px 16px;
+    background:linear-gradient(90deg, rgba(90,167,255,.18), rgba(255,107,107,.18));
+    color:#eaf3ff;
+    font-weight:900;
+    font-size:16px;
+    letter-spacing:.2px;
+    text-align:center;
+    border-bottom:1px solid rgba(90,167,255,.6);
+    box-shadow:0 8px 18px rgba(0,0,0,.35);
+  }
   #plinko-game input[type=number], #plinko-game input[type=range]{ width:100%; box-sizing:border-box; background:#0f1724; color:var(--text); border:1px solid var(--edge); border-radius:10px; padding:10px 12px; outline:0 }
   #plinko-game input[type=number]:focus{ box-shadow:0 0 0 4px rgba(90,167,255,.15); border-color:var(--accent) }
   #plinko-game .seg{ display:flex; border:1px solid var(--edge); border-radius:12px; overflow:hidden; background:#0f1724 }
@@ -155,6 +169,7 @@
 </style>
 </head>
 <body>
+<div class="warning-banner"><span aria-hidden="true">⚠️</span><span>For educational purposes only. No real money in use.</span></div>
 <div class="plinko-root" id="plinko-game">
 <div class="wrap">
 <!-- Left Controls -->
@@ -221,7 +236,6 @@
 </aside>
 </div>
 
-<p class="disclaimer">For educational purposes only. No real money in use.</p>
 </div>
 <script>
 (function(){
