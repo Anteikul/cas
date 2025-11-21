@@ -1,0 +1,95 @@
+:root{
+  --bg:#0b0f14; --panel:#121825; --edge:#1c2940; --muted:#9bb0c9; --text:#e7f1fb;
+  --accent:#5aa7ff; --good:#35d18a; --bad:#ff6b6b; --chip:#172235; --gold:#ffd266;
+  --shadow:0 6px 20px rgba(0,0,0,.35);
+}
+html,body{height:100%}
+body{
+  margin:0; color:var(--text);
+  background:
+    radial-gradient(1300px 700px at 50% -8%, #162238 0%, transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, #0f1a2a 0%, transparent 60%),
+    var(--bg);
+  font:14px/1.42 system-ui, Segoe UI, Roboto, Inter, sans-serif;
+  letter-spacing:.2px;
+}
+*{box-sizing:border-box}
+
+.wrap{ display:grid; gap:16px; padding:16px; grid-template-columns:320px 1fr 340px; }
+@media (max-width:1100px){ .wrap{ grid-template-columns:1fr } }
+
+.panel{
+  background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 30%), var(--panel);
+  border:1px solid var(--edge); border-radius:14px; box-shadow:var(--shadow);
+}
+.panel h2{
+  margin:0; padding:12px 14px; font-size:13px; text-transform:uppercase; letter-spacing:.12em;
+  color:var(--muted); border-bottom:1px solid var(--edge);
+}
+.controls{ padding:14px; display:grid; gap:12px }
+.section{ padding:14px; display:grid; gap:12px }
+.row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+.pill{ padding:8px 12px; border:1px solid var(--edge); border-radius:10px; background:var(--chip) }
+input[type=number], input[type=text], input[type=range], select{
+  background:var(--chip); color:var(--text); border:1px solid var(--edge);
+  border-radius:10px; padding:10px 12px; outline:none; width:100%;
+}
+.btn{
+  user-select:none; cursor:pointer; white-space:nowrap;
+  padding:10px 14px; border-radius:12px; border:1px solid var(--edge);
+  background:linear-gradient(180deg, rgba(255,255,255,.06), transparent 50%), #152033;
+  transition:transform .05s ease, filter .2s ease, background .2s ease, opacity .2s;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.btn:hover{ filter:brightness(1.1) }
+.btn:active{ transform:translateY(1px) }
+.btn.accent{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--accent); color:#07121f; border-color:#3f83db }
+.btn.good{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--good); color:#062016; border-color:#1e9f6a }
+.btn.bad{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--bad); color:#290909; border-color:#d05151 }
+.btn.ghost{ background:transparent; color:var(--text) }
+.btn.pill{ color:var(--text) }
+.btn.split{ background:#ffffff; color:#0b1424; border-color:#e4e9f3 }
+.btn[disabled]{ opacity:.5; pointer-events:none }
+.stat{ font-variant-numeric:tabular-nums; }
+.muted{ color:var(--muted) }
+.divider{ height:1px; background:var(--edge); margin:4px 0 10px }
+.warning-banner{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:14px 16px;
+  background:linear-gradient(90deg, rgba(255,210,102,.18), rgba(255,107,107,.18));
+  color:#ffe9c7;
+  font-weight:900;
+  font-size:16px;
+  letter-spacing:.2px;
+  text-align:center;
+  border-bottom:1px solid rgba(255,210,102,.6);
+  box-shadow:0 8px 18px rgba(0,0,0,.35);
+}
+
+.lobby-row{ margin-bottom:8px }
+.lobby-btn{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:10px 12px;
+  border:1px solid var(--edge);
+  border-radius:12px;
+  background:transparent;
+  color:var(--text);
+  text-decoration:none;
+  font-weight:600;
+  cursor:pointer;
+  width:auto; min-width:0;
+}
+.lobby-btn:hover{ background:rgba(255,255,255,.04) }
+
+.chip-tag{ display:inline-flex; gap:6px; padding:6px 10px; border-radius:10px; border:1px solid var(--edge); background:#0f1726 }
+.table-surface{
+  position:relative; padding:16px; display:grid; gap:16px; min-height:560px;
+  background:
+    radial-gradient(1000px 300px at 50% 0%, rgba(90,167,255,.08), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.02), transparent 30%),
+    var(--panel);
+  border:1px solid var(--edge); border-radius:16px; box-shadow:var(--shadow);
+}
