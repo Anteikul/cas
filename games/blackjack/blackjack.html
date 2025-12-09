@@ -48,12 +48,12 @@
   }
   .btn:hover{ filter:brightness(1.1) }
   .btn:active{ transform:translateY(1px) }
-  .btn.accent{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--accent); color:#07121f; border-color:#3f83db }
-  .btn.good{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--good); color:#062016; border-color:#1e9f6a }
-  .btn.bad{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--bad); color:#290909; border-color:#d05151 }
+  .btn.hit-action{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--good); color:#062016; border-color:#1e9f6a }
+  .btn.fold-action{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), #f6c356; color:#241600; border-color:#c9972a }
+  .btn.double-action{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), #7ad5ff; color:#041320; border-color:#2d8cc9 }
+  .btn.split-action{ background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), #d7b2ff; color:#1f0c2f; border-color:#9f6ad8 }
   .btn.ghost{ background:transparent; color:var(--text) }
   .btn.pill{ color:var(--text) }
-  .btn.split{ background:#ffffff; color:#0b1424; border-color:#e4e9f3 }
   #newShoeBtn{ color:#fff; }
   .btn[disabled]{ opacity:.5; pointer-events:none }
   .stat{ font-variant-numeric:tabular-nums; }
@@ -239,10 +239,10 @@
 
       <!-- order: Hit, Stand, Double, Split -->
       <div class="actionbar">
-        <button class="btn good" id="hitBtn" disabled>Hit</button>
-        <button class="btn bad" id="standBtn" disabled>Stand</button>
-        <button class="btn accent" id="doubleBtn" disabled>Double</button>
-        <button class="btn split" id="splitBtn" disabled>Split</button>
+        <button class="btn hit-action" id="hitBtn" disabled>Hit</button>
+        <button class="btn fold-action" id="standBtn" disabled>Stand</button>
+        <button class="btn double-action" id="doubleBtn" disabled>Double</button>
+        <button class="btn split-action" id="splitBtn" disabled>Split</button>
         <div style="margin-left:auto" class="muted">Bet: <span class="stat" id="betView">10</span></div>
       </div>
     </main>
