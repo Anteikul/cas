@@ -16,21 +16,26 @@
       width:190px;height:190px;border-radius:50%;position:relative;
       background:radial-gradient(circle at 30% 25%,#fff2ae 0,#f5c558 34%,#b97813 68%,#70410a 100%);
       border:3px solid rgba(255,255,255,.4); box-shadow:0 28px 60px rgba(0,0,0,.45), inset 0 4px 10px rgba(255,255,255,.3);
-      display:grid;place-items:center;font-size:42px;color:#3d2505;font-weight:900;
+      display:grid;place-items:center;font-size:42px;color:#1e1303;text-shadow:0 1px 0 rgba(255,255,255,.25);font-weight:900;
       transform-style:preserve-3d;
     }
     .coin::after{content:"";position:absolute;inset:10px;border-radius:50%;border:2px dashed rgba(61,37,5,.35)}
     .coin.flip{animation:flip 1s cubic-bezier(.24,.8,.22,1)}
     @keyframes flip{from{transform:rotateY(0)}to{transform:rotateY(1800deg)}}
     .choice{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .choice .btn.active{outline:2px solid #8cd9ff;background:linear-gradient(180deg,#2f496e,#1d2d47)}
-    .result{font-size:18px;font-weight:700;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--edge);background:rgba(255,255,255,.03)}
+    .choice .btn{color:var(--text);font-weight:700}
+    .choice .btn.active{outline:2px solid #8cd9ff;background:linear-gradient(180deg,#2f496e,#1d2d47);color:#eaf3ff}
+    #flip-btn{color:#052013;font-weight:800}
+    .quick-adds .btn{color:#dbe9ff}
+    .result{font-size:18px;font-weight:700;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--edge);background:rgba(255,255,255,.03);color:#dfe9fb}
     .result.win{color:var(--good);border-color:rgba(106,227,162,.35);background:rgba(106,227,162,.1)}
     .result.lose{color:var(--bad);border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.1)}
     .history-item{display:flex;justify-content:space-between;gap:8px;padding:10px;border:1px solid var(--edge);border-radius:10px;background:rgba(255,255,255,.03)}
     .history-list{display:grid;gap:8px;max-height:360px;overflow:auto}
     .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .kpi .pill{justify-content:space-between}
+    .kpi .pill{justify-content:space-between;padding:10px 12px}
+    .kpi .pill span{color:var(--muted)}
+    .kpi .pill strong{color:#f4f9ff}
   </style>
 </head>
 <body>
@@ -77,10 +82,10 @@
       <h2>Session stats</h2>
       <div class="panel-body">
         <div class="kpi">
-          <div class="pill"><span>Wins</span><strong id="wins">0</strong></div>
-          <div class="pill"><span>Losses</span><strong id="losses">0</strong></div>
-          <div class="pill"><span>Streak</span><strong id="streak">0</strong></div>
-          <div class="pill"><span>Balance</span><strong class="balance-amount">0.00</strong></div>
+          <div class="pill"><span>Wins:</span><strong id="wins">0</strong></div>
+          <div class="pill"><span>Losses:</span><strong id="losses">0</strong></div>
+          <div class="pill"><span>Streak:</span><strong id="streak">0</strong></div>
+          <div class="pill"><span>Balance:</span><strong class="balance-amount">0.00</strong></div>
         </div>
         <h3 style="margin:6px 0 0">Recent flips</h3>
         <div id="history" class="history-list"></div>
