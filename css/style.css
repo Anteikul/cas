@@ -205,3 +205,12 @@ label{font-size:.9rem;color:#a7b3c1}
   .quick-actions .btn{min-width:unset; flex:1 1 100%}
   .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
 }
+
+
+/* Visual refresh */
+.hero-card,.panel,.tile,.stat{backdrop-filter:blur(10px);}
+.tile::before{content:"";position:absolute;inset:-40% -20% auto;height:80px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent);transform:translateX(-120%) rotate(8deg);transition:transform .9s ease;pointer-events:none}
+.tile:hover::before{transform:translateX(130%) rotate(8deg)}
+.btn.primary{box-shadow:0 14px 30px rgba(92,240,183,.35),0 0 0 1px rgba(255,255,255,.12) inset}
+.badge{letter-spacing:.3px}
+.hero-card h1{background:linear-gradient(90deg,#ffffff,#bde8ff 60%,#8cf3cd);-webkit-background-clip:text;background-clip:text;color:transparent}

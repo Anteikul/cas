@@ -101,3 +101,10 @@ input[type=number], input[type=text], input[type=range], select{
     var(--panel);
   border:1px solid var(--edge); border-radius:16px; box-shadow:var(--shadow);
 }
+
+
+/* Global game polish */
+.panel{backdrop-filter:blur(10px);}
+.btn{font-weight:700;letter-spacing:.2px}
+.btn.accent{box-shadow:0 10px 24px rgba(92,240,183,.35)}
+.warning-banner{position:sticky;top:0;z-index:40}
