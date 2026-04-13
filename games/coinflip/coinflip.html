@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coinflip — Heads or Tails</title>
+  <link rel="stylesheet" href="../../css/game-theme.css">
+  <style>
+    .shell{max-width:1200px;margin:0 auto;padding:16px;display:grid;grid-template-columns:320px 1fr 320px;gap:16px}
+    @media (max-width:1100px){.shell{grid-template-columns:1fr}}
+    .panel-body{padding:14px;display:grid;gap:12px}
+    .title{margin:0 0 6px;font-size:28px;letter-spacing:.3px}
+    .sub{margin:0;color:var(--muted)}
+    .coin-zone{display:grid;place-items:center;padding:24px;min-height:420px}
+    .coin{
+      width:190px;height:190px;border-radius:50%;position:relative;
+      background:radial-gradient(circle at 30% 25%,#fff2ae 0,#f5c558 34%,#b97813 68%,#70410a 100%);
+      border:3px solid rgba(255,255,255,.4); box-shadow:0 28px 60px rgba(0,0,0,.45), inset 0 4px 10px rgba(255,255,255,.3);
+      display:grid;place-items:center;font-size:42px;color:#3d2505;font-weight:900;
+      transform-style:preserve-3d;
+    }
+    .coin::after{content:"";position:absolute;inset:10px;border-radius:50%;border:2px dashed rgba(61,37,5,.35)}
+    .coin.flip{animation:flip 1s cubic-bezier(.24,.8,.22,1)}
+    @keyframes flip{from{transform:rotateY(0)}to{transform:rotateY(1800deg)}}
+    .choice{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .choice .btn.active{outline:2px solid #8cd9ff;background:linear-gradient(180deg,#2f496e,#1d2d47)}
+    .result{font-size:18px;font-weight:700;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--edge);background:rgba(255,255,255,.03)}
+    .result.win{color:var(--good);border-color:rgba(106,227,162,.35);background:rgba(106,227,162,.1)}
+    .result.lose{color:var(--bad);border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.1)}
+    .history-item{display:flex;justify-content:space-between;gap:8px;padding:10px;border:1px solid var(--edge);border-radius:10px;background:rgba(255,255,255,.03)}
+    .history-list{display:grid;gap:8px;max-height:360px;overflow:auto}
+    .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .kpi .pill{justify-content:space-between}
+  </style>
+</head>
+<body>
+  <div class="warning-banner"><span aria-hidden="true">⚠️</span><span>For educational purposes only. No real money in use.</span></div>
+
+  <div class="shell">
+    <section class="panel">
+      <h2>Bet setup</h2>
+      <div class="panel-body">
+        <a class="lobby-btn" href="../../index.html">← Lobby</a>
+        <div>
+          <label>Bet amount</label>
+          <input id="bet-amount" type="number" min="0" step="0.01" value="10">
+        </div>
+        <div class="quick-adds">
+          <button class="btn" data-add="1">+1</button>
+          <button class="btn" data-add="10">+10</button>
+          <button class="btn" data-add="50">+50</button>
+          <button class="btn" id="half-bet">½</button>
+          <button class="btn" id="double-bet">2×</button>
+        </div>
+        <div>
+          <label>Your choice</label>
+          <div class="choice" id="choice-wrap">
+            <button class="btn active" data-choice="heads">Heads</button>
+            <button class="btn" data-choice="tails">Tails</button>
+          </div>
+        </div>
+        <button class="btn accent" id="flip-btn">Flip coin</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Coinflip table</h2>
+      <div class="panel-body coin-zone">
+        <h1 class="title">Golden Coinflip</h1>
+        <p class="sub">Payout: <strong>1.98×</strong> • House edge: 1%</p>
+        <div class="coin" id="coin">H</div>
+        <div class="result" id="result">Place your bet and flip.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Session stats</h2>
+      <div class="panel-body">
+        <div class="kpi">
+          <div class="pill"><span>Wins</span><strong id="wins">0</strong></div>
+          <div class="pill"><span>Losses</span><strong id="losses">0</strong></div>
+          <div class="pill"><span>Streak</span><strong id="streak">0</strong></div>
+          <div class="pill"><span>Balance</span><strong class="balance-amount">0.00</strong></div>
+        </div>
+        <h3 style="margin:6px 0 0">Recent flips</h3>
+        <div id="history" class="history-list"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="../../js/common.js"></script>
+  <script>
+    (() => {
+      const { $, $$, fmt, Wallet, placeBet, payout, pushNotify } = Common;
+      const PAYOUT = 1.98;
+      let choice = 'heads';
+      let wins = 0, losses = 0, streak = 0;
+
+      const coin = $('#coin');
+      const result = $('#result');
+      const history = $('#history');
+
+      function addHistory(text, positive){
+        const row = document.createElement('div');
+        row.className = 'history-item';
+        row.innerHTML = `<span>${text}</span><strong style="color:${positive ? 'var(--good)' : 'var(--bad)'}">${positive ? 'WIN' : 'LOSS'}</strong>`;
+        history.prepend(row);
+        while(history.children.length > 12) history.removeChild(history.lastChild);
+      }
+
+      function updateStats(){
+        $('#wins').textContent = wins;
+        $('#losses').textContent = losses;
+        $('#streak').textContent = streak;
+        Wallet.render();
+      }
+
+      function pickOutcome(){
+        return Math.random() < 0.5 ? 'heads' : 'tails';
+      }
+
+      function runFlip(){
+        if(!placeBet()) return;
+        const stake = Number($('#bet-amount').value || 0);
+        const landed = pickOutcome();
+        coin.classList.remove('flip');
+        void coin.offsetWidth;
+        coin.classList.add('flip');
+
+        setTimeout(() => {
+          coin.textContent = landed === 'heads' ? 'H' : 'T';
+          const isWin = landed === choice;
+          result.className = `result ${isWin ? 'win' : 'lose'}`;
+          if(isWin){
+            payout(PAYOUT);
+            wins += 1;
+            streak = Math.max(1, streak + 1);
+            result.textContent = `You won ${fmt(stake * PAYOUT)} on ${landed.toUpperCase()}!`;
+            pushNotify(`Coinflip win: ${fmt(stake * PAYOUT)} (${landed})`);
+            addHistory(`${choice} vs ${landed} • ${fmt(stake)}`, true);
+          } else {
+            losses += 1;
+            streak = 0;
+            result.textContent = `Missed! Coin landed on ${landed.toUpperCase()}.`;
+            pushNotify(`Coinflip loss on ${landed}`);
+            addHistory(`${choice} vs ${landed} • ${fmt(stake)}`, false);
+          }
+          updateStats();
+        }, 950);
+      }
+
+      $$('#choice-wrap .btn').forEach(btn => btn.addEventListener('click', () => {
+        $$('#choice-wrap .btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        choice = btn.dataset.choice;
+      }));
+
+      $$('[data-add]').forEach(btn => btn.addEventListener('click', () => {
+        const input = $('#bet-amount');
+        input.value = (Number(input.value || 0) + Number(btn.dataset.add)).toFixed(2);
+      }));
+      $('#half-bet').addEventListener('click', () => $('#bet-amount').value = (Number($('#bet-amount').value || 0) / 2).toFixed(2));
+      $('#double-bet').addEventListener('click', () => $('#bet-amount').value = (Number($('#bet-amount').value || 0) * 2).toFixed(2));
+      $('#flip-btn').addEventListener('click', runFlip);
+
+      updateStats();
+    })();
+  </script>
+</body>
+</html>

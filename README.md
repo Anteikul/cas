@@ -52,6 +52,7 @@ This project is intentionally simple so you can focus on the UI and logic:
 - **Static‑only frontend**: pure **HTML/CSS/JS** — no backend and no database.
 - **Entry point**: `index.html` loads styles and scripts and links to modules/pages.
 - **Modules/pages**: features (e.g., mini‑games) live in separate HTML/JS files and are linked from the index.
+- **Included mini-games**: Mines, Plinko, Dice, Roulette, Blackjack, and Coinflip.
 - **Client‑side state**: kept in the browser (in‑memory). For demo persistence, use `localStorage`/`sessionStorage` if needed.
 - **Local assets**: images/fonts/audio live in this repo and are referenced via relative paths (no external CDNs by default).
 - **Security**: no auth, no payments; do not use for real users or production data.
